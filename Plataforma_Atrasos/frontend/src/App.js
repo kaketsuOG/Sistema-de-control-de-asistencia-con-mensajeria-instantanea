@@ -1,32 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const [connectionStatus, setConnectionStatus] = useState(null);
-
-  useEffect(() => {
-    fetch('http://localhost:3000/test-connection')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => setConnectionStatus(data))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
-
   return (
-    <div>
-      <h1>Connection Status:</h1>
-      {connectionStatus ? (
-        <div>
-          <p>{connectionStatus.message}</p>
-          <p>Result: {connectionStatus.result}</p>
-        </div>
-      ) : (
-        <p>Checking connection...</p>
-      )}
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      </Routes>
+    </Router>
   );
 }
 
