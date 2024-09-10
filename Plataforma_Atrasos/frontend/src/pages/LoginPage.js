@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { login } from '../services/authService';
 
 const LoginPage = () => {
-    const [nombreUsuario, setNombreUsuario] = useState('');
+    const [rutUsername, setRutUsername] = useState('');
     const [contraseña, setContraseña] = useState('');
     const [error, setError] = useState('');
 
@@ -10,8 +10,8 @@ const LoginPage = () => {
         e.preventDefault();
 
         try {
-            await login(nombreUsuario, contraseña);
-            // Redirigir al usuario a la página de inicio u otra página después del inicio de sesión
+            await login(rutUsername, contraseña);
+            // Redirigir a la página de inicio después del login exitoso
             window.location.href = '/';
         } catch (err) {
             setError(err.message);
@@ -24,11 +24,11 @@ const LoginPage = () => {
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label>Nombre de Usuario</label>
+                    <label>RUT</label>
                     <input
                         type="text"
-                        value={nombreUsuario}
-                        onChange={(e) => setNombreUsuario(e.target.value)}
+                        value={rutUsername}
+                        onChange={(e) => setRutUsername(e.target.value)}
                     />
                 </div>
                 <div>
