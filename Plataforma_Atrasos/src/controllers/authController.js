@@ -28,12 +28,12 @@ exports.login = (req, res) => {
 };
 
 exports.register = (req, res) => {
-    const { rutUsername, contraseña } = req.body;
+    const { nombreUsuario, codRol, contraseña, rutUsername } = req.body;
 
     bcrypt.hash(contraseña, 10, (err, hashedPassword) => {
         if (err) return res.status(500).json({ message: 'Error al hash de la contraseña' });
 
-        db.query('INSERT INTO USUARIOS (RUT_USERNAME, CONTRASEÑA) VALUES (?, ?)', [rutUsername, hashedPassword], (err) => {
+        db.query('INSERT INTO USUARIOS (NOMBRE_USUARIO, COD_ROL, CONTRASEÑA, RUT_USERNAME) VALUES (?, ?, ?, ?)', [nombreUsuario, codRol, hashedPassword, rutUsername], (err) => {
             if (err) return res.status(500).json({ message: 'Error al registrar el usuario' });
 
             res.status(201).json({ message: 'Usuario registrado correctamente' });
@@ -41,6 +41,30 @@ exports.register = (req, res) => {
     });
 };
 
-exports.getUser = (req, res) => {
-    // Lógica para obtener al usuario
+exports.getAllUsers = (req, res) => {
+    db.query('SELECT * FROM USUARIOS', (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error en la base de datos' });
+
+        res.json(results);
+    });
+};
+
+exports.getUsersByRole = (req, res) => {
+    const { codRol } = req.params;
+
+    db.query('SELECT * FROM USUARIOS WHERE COD_ROL = ?', [codRol], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error en la base de datos' });
+
+        res.json(results);
+    });
+};
+
+exports.deleteUser = (req, res) => {
+    const { codUsuario } = req.params;
+
+    db.query('DELETE FROM USUARIOS WHERE COD_USUARIO = ?', [codUsuario], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error al eliminar el usuario' });
+
+        res.json({ message: 'Usuario eliminado correctamente' });
+    });
 };

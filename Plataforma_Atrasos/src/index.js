@@ -11,7 +11,6 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Rutas
 app.use('/auth', authRoutes);
 
 app.listen(port, () => {
