@@ -47,7 +47,7 @@ const LoginPage = () => {
                             value={rutUsername}
                             onChange={(e) => setRutUsername(e.target.value)}
                             style={{
-                                width: '100%',
+                                width: '95%',
                                 padding: '10px',
                                 borderRadius: '5px',
                                 border: '1px solid #ccc',
@@ -62,7 +62,7 @@ const LoginPage = () => {
                             value={contraseña}
                             onChange={(e) => setContraseña(e.target.value)}
                             style={{
-                                width: '100%',
+                                width: '95%',
                                 padding: '10px',
                                 borderRadius: '5px',
                                 border: '1px solid #ccc',
@@ -88,7 +88,7 @@ const LoginPage = () => {
                         style={{
                             width: '100%',
                             padding: '12px',
-                            backgroundColor: '#007BFF',
+                            backgroundColor: '#FF8C00',
                             color: 'white',
                             border: 'none',
                             borderRadius: '5px',

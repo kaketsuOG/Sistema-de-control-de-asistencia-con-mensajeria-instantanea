@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { register } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterPage = () => {
     const [nombreUsuario, setNombreUsuario] = useState('');
@@ -8,6 +9,7 @@ const RegisterPage = () => {
     const [confirmarContraseña, setConfirmarContraseña] = useState('');
     const [codRol, setCodRol] = useState('');
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -21,6 +23,7 @@ const RegisterPage = () => {
             await register({ nombreUsuario, rutUsername, contraseña, codRol });
             console.log('Registro exitoso');
             // Aquí podrías redirigir al usuario al login o a otra página
+            navigate('/login');
         } catch (err) {
             setError(err.message);
         }
@@ -95,8 +98,8 @@ const styles = {
     },
     card: {
         width: '400px',
-        padding: '20px',
-        borderRadius: '8px',
+        padding: '40px',
+        borderRadius: '80px',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         backgroundColor: '#fff',
     },
@@ -108,7 +111,7 @@ const styles = {
         marginBottom: '15px',
     },
     input: {
-        width: '100%',
+        width: '95%',
         padding: '10px',
         marginTop: '5px',
         borderRadius: '4px',
@@ -117,7 +120,7 @@ const styles = {
     button: {
         width: '100%',
         padding: '10px',
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#FF8C00',
         color: '#fff',
         border: 'none',
         borderRadius: '4px',

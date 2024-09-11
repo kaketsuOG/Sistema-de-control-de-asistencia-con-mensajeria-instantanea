@@ -16,19 +16,29 @@ export const login = async (rutUsername, contraseña) => {
     }
 };
 
-export const register = async (rutUsername, contraseña) => {
-    const response = await fetch('http://localhost:3000/auth/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rutUsername, contraseña })
-    });
+export const register = async ({ nombreUsuario, rutUsername, contraseña, codRol }) => {
+    try {
+        const response = await fetch('http://localhost:3000/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nombreUsuario,
+                rutUsername,
+                contraseña,
+                codRol,
+            }),
+        });
 
-    const data = await response.json();
-    if (response.ok) {
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error en el registro');
+        }
+
+        const data = await response.json();
         return data;
-    } else {
-        throw new Error(data.message || 'Error en el registro');
+    } catch (error) {
+        throw new Error(error.message || 'Error en el registro');
     }
 };
