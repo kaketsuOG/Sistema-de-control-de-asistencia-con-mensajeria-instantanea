@@ -11,13 +11,17 @@ const HomePage = () => {
         if (storedUser) {
             setUserName(storedUser);
         } else {
-            setUserName('No te encontre');
+            setUserName('No te encontré');
         }
     }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token'); // Elimina el token para cerrar sesión
         navigate('/login'); // Redirige al login
+    };
+
+    const handleNavigation = (path) => {
+        navigate(path);
     };
 
     const styles = {
@@ -45,6 +49,15 @@ const HomePage = () => {
         sidebarListItem: {
             margin: '10px 0',
             cursor: 'pointer',
+            padding: '10px',
+            borderRadius: '5px',
+            transition: 'background-color 0.3s',
+        },
+        sidebarListItemActive: {
+            backgroundColor: '#34495e',
+        },
+        sidebarListItemInactive: {
+            backgroundColor: 'transparent',
         },
         mainContent: {
             flexGrow: '1',
@@ -89,9 +102,24 @@ const HomePage = () => {
                 <div style={styles.sidebarTop}>
                     <h3 style={styles.sidebarTitle}>Menú</h3>
                     <ul style={styles.sidebarList}>
-                        <li style={styles.sidebarListItem}>Control de Atrasos</li>
-                        <li style={styles.sidebarListItem}>Reportes</li>
-                        <li style={styles.sidebarListItem}>Mensajería</li>
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={() => handleNavigation('/attendance')}
+                        >
+                            Control de Atrasos
+                        </li>
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={() => handleNavigation('/reports')}
+                        >
+                            Reportes
+                        </li>
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={() => handleNavigation('/messaging')}
+                        >
+                            Mensajería
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -116,4 +144,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
 

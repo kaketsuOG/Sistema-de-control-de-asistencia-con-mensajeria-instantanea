@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
+import AttendancePage from './pages/AttendancePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -16,6 +17,8 @@ function App() {
 
         {/* Página de registro */}
         <Route path="/register" element={<RegisterPage />} />
+
+        <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
 
         {/* Ruta protegida para la página principal */}
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
