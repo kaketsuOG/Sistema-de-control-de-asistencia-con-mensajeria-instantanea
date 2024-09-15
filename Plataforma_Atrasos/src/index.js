@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const bodyParser = require('express').json;
 const authRoutes = require('./routes/authRoutes');
 const atrasosRoutes = require('./routes/atrasosRoutes'); // Agrega esta línea
 
@@ -10,6 +11,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(bodyParser());
 app.use(express.json());
 
 // Rutas

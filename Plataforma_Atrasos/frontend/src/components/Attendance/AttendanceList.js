@@ -9,10 +9,11 @@ const AttendanceList = () => {
     useEffect(() => {
         const fetchAtrasos = async () => {
             try {
-                const response = await axios.get('/api/atrasos');
+                const response = await axios.get('http://localhost:3000/api/atrasos');
+                console.log(response.data); // Verifica los datos recibidos
                 setAtrasos(response.data);
             } catch (err) {
-                console.error('Error al obtener atrasos');
+                console.error('Error al obtener atrasos', err);
             }
         };
 
@@ -21,10 +22,10 @@ const AttendanceList = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`/api/atrasos/${id}`);
+            await axios.delete(`http://localhost:3000/api/atrasos/${id}`);
             setAtrasos(atrasos.filter(atraso => atraso.id !== id));
         } catch (err) {
-            console.error('Error al eliminar el atraso');
+            console.error('Error al eliminar el atraso', err);
         }
     };
 
@@ -34,10 +35,10 @@ const AttendanceList = () => {
             <AttendanceForm onSuccess={() => window.location.reload()} currentData={selectedAtraso} />
             <ul>
                 {atrasos.map(atraso => (
-                    <li key={atraso.id}>
-                        <span>{atraso.rutAlumno} - {atraso.fechaAtraso}</span>
+                    <li key={atraso.COD_ATRASOS}>
+                        <span>{atraso.RUT_ALUMNO} - {atraso.FECHA_ATRASOS}</span>
                         <button onClick={() => setSelectedAtraso(atraso)}>Editar</button>
-                        <button onClick={() => handleDelete(atraso.id)}>Eliminar</button>
+                        <button onClick={() => handleDelete(atraso.COD_ATRASOS)}>Eliminar</button>
                     </li>
                 ))}
             </ul>
@@ -46,3 +47,5 @@ const AttendanceList = () => {
 };
 
 export default AttendanceList;
+
+

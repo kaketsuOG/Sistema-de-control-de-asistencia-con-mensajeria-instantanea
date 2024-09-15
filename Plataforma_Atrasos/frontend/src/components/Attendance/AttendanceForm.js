@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AttendanceForm = ({ onSuccess, currentData }) => {
     const [rutAlumno, setRutAlumno] = useState(currentData?.rutAlumno || '');
-    const [fechaAtraso, setFechaAtraso] = useState(currentData?.fechaAtraso || '');
+    const [fechaAtrasos, setFechaAtraso] = useState(currentData?.fechaAtrasos || '');
     const [justificativo, setJustificativo] = useState(currentData?.justificativo || false);
     const [error, setError] = useState('');
 
@@ -11,13 +11,25 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         e.preventDefault();
 
         try {
-            const url = currentData ? `/api/atrasos${currentData.id}` : '/api/atrasos';
-            const method = currentData ? 'put' : 'post';
+            // Definir la URL y el método dependiendo si es edición o creación
+            const url = currentData 
+                ? `http://localhost:3000/api/atrasos/${currentData.id}`
+                : 'http://localhost:3000/api/atrasos';
+                
+            // Utilizar axios.post o axios.put directamente
+            const method = currentData ? axios.put : axios.post ;
 
-            await axios[method](url, { rutAlumno, fechaAtraso, justificativo });
-            onSuccess();
+            // Realizar la solicitud al backend
+            const response = await method(url, { rutAlumno, fechaAtrasos, justificativo });
+
+            if (response.status >= 200 && response.status < 300) {
+                onSuccess(); // Llama a onSuccess solo si la respuesta es exitosa
+            } else {
+                setError('Error en la solicitud. Código de estado: ' + response.status);
+            }
         } catch (err) {
-            setError('Error al guardar el atraso');
+            console.error('Error al guardar el atraso', err);
+            setError('Error al guardar el atraso: ' + err.message);
         }
     };
 
@@ -39,7 +51,7 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                     <label>Fecha del Atraso</label>
                     <input
                         type="date"
-                        value={fechaAtraso}
+                        value={fechaAtrasos}
                         onChange={(e) => setFechaAtraso(e.target.value)}
                         required
                     />
@@ -59,3 +71,4 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
 };
 
 export default AttendanceForm;
+
