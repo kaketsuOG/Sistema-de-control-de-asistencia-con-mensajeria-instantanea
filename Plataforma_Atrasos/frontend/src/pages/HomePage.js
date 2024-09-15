@@ -14,13 +14,17 @@ const HomePage = () => {
         if (storedUser) {
             setUserName(storedUser);
         } else {
-            setUserName('No te encontre');
+            setUserName('No te encontré');
         }
     }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/login');
+    };
+
+    const handleNavigation = (path) => {
+        navigate(path);
     };
 
     const styles = {
@@ -50,6 +54,15 @@ const HomePage = () => {
             alignItems: 'center',
             margin: '10px 0',
             cursor: 'pointer',
+            padding: '10px',
+            borderRadius: '5px',
+            transition: 'background-color 0.3s',
+        },
+        sidebarListItemActive: {
+            backgroundColor: '#34495e',
+        },
+        sidebarListItemInactive: {
+            backgroundColor: 'transparent',
         },
         icon: {
             width: '30px',  // Ajusta el tamaño del icono
@@ -99,16 +112,25 @@ const HomePage = () => {
                 <div style={styles.sidebarTop}>
                     <h3 style={styles.sidebarTitle}>Menú</h3>
                     <ul style={styles.sidebarList}>
-                        <li style={styles.sidebarListItem}>
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={() => handleNavigation('/attendance')}
+                        >
                             <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
-                            Control de Atrasos
+                            control de atrasos
                         </li>
-                        <li style={styles.sidebarListItem}>
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={() => handleNavigation('/reports')}
+                        >
                             <img src={reportIcon} alt="Reportes" style={styles.icon} />
                             Reportes
                         </li>
-                        <li style={styles.sidebarListItem}>
-                            <img src={messageIcon} alt="Mensajería" style={styles.icon} />
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={() => handleNavigation('/messaging')}
+                        >
+                             <img src={messageIcon} alt="Mensajería" style={styles.icon} />
                             Mensajería
                         </li>
                     </ul>
@@ -135,3 +157,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
