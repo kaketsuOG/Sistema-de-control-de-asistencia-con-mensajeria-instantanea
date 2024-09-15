@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import AttendanceForm from './AttendanceForm';
+import {format} from 'date-fns';
 
 const AttendanceList = () => {
     const [atrasos, setAtrasos] = useState([]);
@@ -31,12 +32,12 @@ const AttendanceList = () => {
 
     return (
         <div>
-            <h2>Lista de Atrasos</h2>
+            <h2></h2>
             <AttendanceForm onSuccess={() => window.location.reload()} currentData={selectedAtraso} />
             <ul>
                 {atrasos.map(atraso => (
                     <li key={atraso.COD_ATRASOS}>
-                        <span>{atraso.RUT_ALUMNO} - {atraso.FECHA_ATRASOS}</span>
+                        <span>{atraso.RUT_ALUMNO} -{format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')}</span> {/* Formatea la fecha */}
                         <button onClick={() => setSelectedAtraso(atraso)}>Editar</button>
                         <button onClick={() => handleDelete(atraso.COD_ATRASOS)}>Eliminar</button>
                     </li>

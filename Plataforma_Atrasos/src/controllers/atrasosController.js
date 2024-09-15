@@ -13,7 +13,8 @@ exports.getAllAtrasos = (req, res) => {
 
 // Registrar un nuevo atraso
 exports.createAtraso = (req, res) => {
-    const { rutAlumno, fechaAtrasos, justificativo } = req.body;
+    const { rutAlumno, justificativo } = req.body;
+    const fechaAtrasos = new Date();
 
     if (!rutAlumno || !fechaAtrasos) {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
