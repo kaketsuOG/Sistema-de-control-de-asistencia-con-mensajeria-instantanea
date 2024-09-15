@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Importa los iconos
+import controlIcon from '../assets/icons/control.png';
+import reportIcon from '../assets/icons/report.png';
+import messageIcon from '../assets/icons/message.png';
 
 const HomePage = () => {
     const navigate = useNavigate();
     const [userName, setUserName] = useState('');
 
-    // Simulación de obtener el nombre de usuario (puedes cambiarlo según tu lógica)
     useEffect(() => {
-        const storedUser = localStorage.getItem('userName'); // Suponiendo que el nombre está en el local storage
+        const storedUser = localStorage.getItem('userName');
         if (storedUser) {
             setUserName(storedUser);
         } else {
@@ -16,8 +19,8 @@ const HomePage = () => {
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('token'); // Elimina el token para cerrar sesión
-        navigate('/login'); // Redirige al login
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
     const styles = {
@@ -40,11 +43,18 @@ const HomePage = () => {
         sidebarList: {
             listStyle: 'none',
             padding: '0',
-            marginTop: '10px', // Ajusta la separación con el título
+            marginTop: '10px',
         },
         sidebarListItem: {
+            display: 'flex', // Alinea el icono con el texto
+            alignItems: 'center',
             margin: '10px 0',
             cursor: 'pointer',
+        },
+        icon: {
+            width: '30px',  // Ajusta el tamaño del icono
+            height: '30px',
+            marginRight: '10px',  // Añade espacio entre el icono y el texto
         },
         mainContent: {
             flexGrow: '1',
@@ -78,7 +88,7 @@ const HomePage = () => {
             marginBottom: '10px',
         },
         sidebarTop: {
-            flexGrow: '1', // Hace que las opciones suban más cerca de la parte superior
+            flexGrow: '1',
         },
     };
 
@@ -89,9 +99,18 @@ const HomePage = () => {
                 <div style={styles.sidebarTop}>
                     <h3 style={styles.sidebarTitle}>Menú</h3>
                     <ul style={styles.sidebarList}>
-                        <li style={styles.sidebarListItem}>Control de Atrasos</li>
-                        <li style={styles.sidebarListItem}>Reportes</li>
-                        <li style={styles.sidebarListItem}>Mensajería</li>
+                        <li style={styles.sidebarListItem}>
+                            <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
+                            Control de Atrasos
+                        </li>
+                        <li style={styles.sidebarListItem}>
+                            <img src={reportIcon} alt="Reportes" style={styles.icon} />
+                            Reportes
+                        </li>
+                        <li style={styles.sidebarListItem}>
+                            <img src={messageIcon} alt="Mensajería" style={styles.icon} />
+                            Mensajería
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -116,4 +135,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
