@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { format } from 'date-fns'; // Importa la función para formatear fechas
 import AttendanceForm from './AttendanceForm';
-import {format} from 'date-fns';
 
 const AttendanceList = () => {
     const [atrasos, setAtrasos] = useState([]);
@@ -37,7 +37,10 @@ const AttendanceList = () => {
             <ul>
                 {atrasos.map(atraso => (
                     <li key={atraso.COD_ATRASOS}>
+
                         <span>{atraso.RUT_ALUMNO} -{format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')}</span> {/* Formatea la fecha */}
+                        <span>{atraso.RUT_ALUMNO} - {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')}</span> {/* Formatea la fecha */}
+
                         <button onClick={() => setSelectedAtraso(atraso)}>Editar</button>
                         <button onClick={() => handleDelete(atraso.COD_ATRASOS)}>Eliminar</button>
                     </li>
