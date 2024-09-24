@@ -34,7 +34,7 @@ const HomePage = () => {
         },
         sidebar: {
             width: '250px',
-            backgroundColor: '#2c3e50',
+            backgroundColor: '#01579b',
             color: 'white',
             padding: '20px',
             display: 'flex',
