@@ -2,7 +2,15 @@ const db = require('../config/db');
 
 // Obtener todos los atrasos
 exports.getAllAtrasos = (req, res) => {
-    const query = 'SELECT * FROM ATRASOS';
+    const query = `
+        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
+               CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
+               C.NOMBRE_CURSO
+        FROM ATRASOS A
+        JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
+        JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
+        GROUP BY A.COD_ATRASOS
+    `;
     db.query(query, (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error al obtener los atrasos' });
@@ -10,6 +18,7 @@ exports.getAllAtrasos = (req, res) => {
         res.status(200).json(results);
     });
 };
+
 
 // Registrar un nuevo atraso
 exports.createAtraso = (req, res) => {

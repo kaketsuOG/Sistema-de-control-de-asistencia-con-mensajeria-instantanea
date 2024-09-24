@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { format } from 'date-fns'; // Importa la función para formatear fechas
-import AttendanceForm from './AttendanceForm';
+import { format } from 'date-fns';
 
-const AttendanceList = () => {
+const AttendanceList = ({ onEdit }) => {
     const [atrasos, setAtrasos] = useState([]);
-    const [selectedAtraso, setSelectedAtraso] = useState(null);
 
     useEffect(() => {
         const fetchAtrasos = async () => {
             try {
                 const response = await axios.get('http://localhost:3000/api/atrasos');
-                console.log(response.data); // Verifica los datos recibidos
+                console.log(response.data);
                 setAtrasos(response.data);
             } catch (err) {
                 console.error('Error al obtener atrasos', err);
@@ -24,7 +22,7 @@ const AttendanceList = () => {
     const handleDelete = async (id) => {
         try {
             await axios.delete(`http://localhost:3000/api/atrasos/${id}`);
-            setAtrasos(atrasos.filter(atraso => atraso.id !== id));
+            setAtrasos(atrasos.filter(atraso => atraso.COD_ATRASOS !== id));
         } catch (err) {
             console.error('Error al eliminar el atraso', err);
         }
@@ -32,17 +30,16 @@ const AttendanceList = () => {
 
     return (
         <div>
-            <h2></h2>
-            <AttendanceForm onSuccess={() => window.location.reload()} currentData={selectedAtraso} />
+            <h2>Lista de Atrasos</h2>
             <ul>
                 {atrasos.map(atraso => (
                     <li key={atraso.COD_ATRASOS}>
-
-                        <span>{atraso.RUT_ALUMNO} -{format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')}</span> {/* Formatea la fecha */}
-                        <span>{atraso.RUT_ALUMNO} - {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')}</span> {/* Formatea la fecha */}
-
-                        <button onClick={() => setSelectedAtraso(atraso)}>Editar</button>
-                        <button onClick={() => handleDelete(atraso.COD_ATRASOS)}>Eliminar</button>
+                        <span>Nombre: {`${atraso.NOMBRE_COMPLETO}`}</span>
+                        <span> - Curso: {atraso.NOMBRE_CURSO}</span>
+                        <span> - Fecha: {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')}</span>
+                        <span> - Justificativo: {atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</span>
+                        <button onClick={() => onEdit(atraso)}>Editar</button>
+                        
                     </li>
                 ))}
             </ul>
@@ -51,5 +48,4 @@ const AttendanceList = () => {
 };
 
 export default AttendanceList;
-
 
