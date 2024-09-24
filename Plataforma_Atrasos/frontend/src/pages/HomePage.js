@@ -5,6 +5,8 @@ import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
 import AttendancePage from './AttendancePage'; // Asegúrate de que la ruta sea correcta
+import logo from '../assets/images/logo.png'; // Importa la imagen del logo
+
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -40,11 +42,16 @@ const HomePage = () => {
         },
         sidebar: {
             width: '250px',
-            backgroundColor: '#2c3e50',
+            backgroundColor: '#01579b',
             color: 'white',
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'space-between',  // Asegura que los elementos se distribuyan en la barra lateral
+        },
+        logo: {
+            width: '90%',  // Ajusta el tamaño de la imagen del logo
+            marginBottom: '10px',
         },
         sidebarTitle: {
             marginBottom: '20px',
@@ -103,8 +110,12 @@ const HomePage = () => {
         sidebarTop: {
             flexGrow: '1',
         },
+        sidebarBottom: {
+            marginTop: 'auto', // Empuja el logo hacia la parte inferior
+        },
     };
 
+    // Retorno del componente
     return (
         <div style={styles.homepageContainer}>
             {/* Sidebar */}
@@ -117,7 +128,9 @@ const HomePage = () => {
                             onClick={toggleAttendance} // Cambia aquí para mostrar/ocultar AttendancePage
                         >
                             <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
-                            Control de Atrasos
+
+                            Control de atrasos
+
                         </li>
                         <li
                             style={styles.sidebarListItem}
@@ -134,6 +147,11 @@ const HomePage = () => {
                             Mensajería
                         </li>
                     </ul>
+                </div>
+
+                {/* Logo en la parte inferior */}
+                <div style={styles.sidebarBottom}>
+                    <img src={logo} alt="Logo" style={styles.logo} />
                 </div>
             </div>
 
@@ -165,7 +183,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-
-
 
