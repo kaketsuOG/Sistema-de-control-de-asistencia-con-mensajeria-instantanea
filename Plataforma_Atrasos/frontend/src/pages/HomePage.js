@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
+import logo from '../assets/images/logo.png'; // Importa la imagen del logo
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -39,6 +40,11 @@ const HomePage = () => {
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'space-between',  // Asegura que los elementos se distribuyan en la barra lateral
+        },
+        logo: {
+            width: '90%',  // Ajusta el tamaño de la imagen del logo
+            marginBottom: '10px',
         },
         sidebarTitle: {
             marginBottom: '20px',
@@ -50,7 +56,7 @@ const HomePage = () => {
             marginTop: '10px',
         },
         sidebarListItem: {
-            display: 'flex', // Alinea el icono con el texto
+            display: 'flex',
             alignItems: 'center',
             margin: '10px 0',
             cursor: 'pointer',
@@ -65,9 +71,9 @@ const HomePage = () => {
             backgroundColor: 'transparent',
         },
         icon: {
-            width: '30px',  // Ajusta el tamaño del icono
+            width: '30px',
             height: '30px',
-            marginRight: '10px',  // Añade espacio entre el icono y el texto
+            marginRight: '10px',
         },
         mainContent: {
             flexGrow: '1',
@@ -103,8 +109,12 @@ const HomePage = () => {
         sidebarTop: {
             flexGrow: '1',
         },
+        sidebarBottom: {
+            marginTop: 'auto', // Empuja el logo hacia la parte inferior
+        },
     };
 
+    // Retorno del componente
     return (
         <div style={styles.homepageContainer}>
             {/* Sidebar */}
@@ -117,7 +127,7 @@ const HomePage = () => {
                             onClick={() => handleNavigation('/attendance')}
                         >
                             <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
-                            control de atrasos
+                            Control de atrasos
                         </li>
                         <li
                             style={styles.sidebarListItem}
@@ -130,10 +140,15 @@ const HomePage = () => {
                             style={styles.sidebarListItem}
                             onClick={() => handleNavigation('/messaging')}
                         >
-                             <img src={messageIcon} alt="Mensajería" style={styles.icon} />
+                            <img src={messageIcon} alt="Mensajería" style={styles.icon} />
                             Mensajería
                         </li>
                     </ul>
+                </div>
+
+                {/* Logo en la parte inferior */}
+                <div style={styles.sidebarBottom}>
+                    <img src={logo} alt="Logo" style={styles.logo} />
                 </div>
             </div>
 
@@ -157,5 +172,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
-
