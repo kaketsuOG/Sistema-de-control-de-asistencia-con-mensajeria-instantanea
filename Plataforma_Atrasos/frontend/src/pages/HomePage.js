@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
+import AttendancePage from './AttendancePage'; // Asegúrate de que la ruta sea correcta
 
 const HomePage = () => {
     const navigate = useNavigate();
     const [userName, setUserName] = useState('');
+    const [showAttendance, setShowAttendance] = useState(false); // Estado para mostrar/ocultar AttendancePage
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userName');
@@ -25,6 +27,10 @@ const HomePage = () => {
 
     const handleNavigation = (path) => {
         navigate(path);
+    };
+
+    const toggleAttendance = () => {
+        setShowAttendance(!showAttendance); // Cambia el estado al hacer clic
     };
 
     const styles = {
@@ -50,7 +56,7 @@ const HomePage = () => {
             marginTop: '10px',
         },
         sidebarListItem: {
-            display: 'flex', // Alinea el icono con el texto
+            display: 'flex',
             alignItems: 'center',
             margin: '10px 0',
             cursor: 'pointer',
@@ -58,16 +64,10 @@ const HomePage = () => {
             borderRadius: '5px',
             transition: 'background-color 0.3s',
         },
-        sidebarListItemActive: {
-            backgroundColor: '#34495e',
-        },
-        sidebarListItemInactive: {
-            backgroundColor: 'transparent',
-        },
         icon: {
-            width: '30px',  // Ajusta el tamaño del icono
+            width: '30px',
             height: '30px',
-            marginRight: '10px',  // Añade espacio entre el icono y el texto
+            marginRight: '10px',
         },
         mainContent: {
             flexGrow: '1',
@@ -114,10 +114,10 @@ const HomePage = () => {
                     <ul style={styles.sidebarList}>
                         <li
                             style={styles.sidebarListItem}
-                            onClick={() => handleNavigation('/attendance')}
+                            onClick={toggleAttendance} // Cambia aquí para mostrar/ocultar AttendancePage
                         >
                             <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
-                            control de atrasos
+                            Control de Atrasos
                         </li>
                         <li
                             style={styles.sidebarListItem}
@@ -130,7 +130,7 @@ const HomePage = () => {
                             style={styles.sidebarListItem}
                             onClick={() => handleNavigation('/messaging')}
                         >
-                             <img src={messageIcon} alt="Mensajería" style={styles.icon} />
+                            <img src={messageIcon} alt="Mensajería" style={styles.icon} />
                             Mensajería
                         </li>
                     </ul>
@@ -148,8 +148,16 @@ const HomePage = () => {
                 </div>
                 {/* Main view */}
                 <div style={styles.contentArea}>
-                    <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
-                    <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
+                    {/* Muestra el mensaje de bienvenida solo si showAttendance es false */}
+                    {!showAttendance && (
+                        <>
+                            <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
+                            <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
+                        </>
+                    )}
+                    
+                    {/* Muestra AttendancePage si showAttendance es true */}
+                    {showAttendance && <AttendancePage />}
                 </div>
             </div>
         </div>
@@ -157,5 +165,7 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+
 
 

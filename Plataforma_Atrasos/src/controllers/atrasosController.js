@@ -44,6 +44,11 @@ exports.updateAtraso = (req, res) => {
     const { id } = req.params;
     const { rutAlumno, fechaAtrasos, justificativo } = req.body;
 
+    // Verifica que el justificativo sea un booleano
+    if (typeof justificativo !== 'boolean') {
+        return res.status(400).json({ error: 'El justificativo debe ser un booleano' });
+    }
+
     const query = 'UPDATE ATRASOS SET RUT_ALUMNO = ?, FECHA_ATRASOS = ?, JUSTIFICATIVO = ? WHERE COD_ATRASOS = ?';
 
     db.query(query, [rutAlumno, fechaAtrasos, justificativo, id], (error, results) => {
@@ -53,6 +58,7 @@ exports.updateAtraso = (req, res) => {
         res.status(200).json({ message: 'Atraso actualizado con éxito' });
     });
 };
+
 
 // Eliminar un atraso
 exports.deleteAtraso = (req, res) => {

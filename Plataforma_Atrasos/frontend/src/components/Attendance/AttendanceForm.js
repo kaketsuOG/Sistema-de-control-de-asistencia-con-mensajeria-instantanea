@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import JustificativoModal from './JustificativoModal'; // Asegúrate de importar el modal
 
 const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
     const [rutAlumno, setRutAlumno] = useState(currentData?.rutAlumno || '');
     const [fechaAtrasos, setFechaAtraso] = useState(currentData?.fechaAtrasos || '');
     const [justificativo, setJustificativo] = useState(currentData?.justificativo || false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setSuccess('');
         try {
             const url = currentData 
                 ? `http://localhost:3000/api/atrasos/${currentData.id}`
                 : 'http://localhost:3000/api/atrasos';
             const method = currentData ? axios.put : axios.post;
             const response = await method(url, { rutAlumno, fechaAtrasos, justificativo });
+            
             if (response.status >= 200 && response.status < 300) {
-                onSuccess();
+                setSuccess('Atraso registrado con éxito');
+                onSuccess();  // Llama a la función de éxito proporcionada
+                // Limpia el formulario
+                setRutAlumno('');
+                setFechaAtraso('');
+                setJustificativo(false);
             } else {
                 setError('Error en la solicitud. Código de estado: ' + response.status);
             }
@@ -24,6 +35,15 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
             console.error('Error al guardar el atraso', err);
             setError('Error al guardar el atraso: ' + err.message);
         }
+    };
+
+    const handleJustificativoUpdate = (newJustificativo) => {
+        setJustificativo(newJustificativo);
+        setModalOpen(false); // Cerrar el modal después de actualizar
+    };
+
+    const openJustificativoModal = () => {
+        setModalOpen(true);
     };
 
     // Estilos en línea
@@ -69,12 +89,18 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
             textAlign: 'center',
             marginBottom: '15px',
         },
+        success: {
+            color: '#28a745',
+            textAlign: 'center',
+            marginBottom: '15px',
+        },
     };
 
     return (
         <div style={styles.container}>
             <h2 style={styles.title}>{currentData ? 'Editar Atraso' : 'Agregar Atraso'}</h2>
             {error && <p style={styles.error}>{error}</p>}
+            {success && <p style={styles.success}>{success}</p>}
             <form onSubmit={handleSubmit}>
                 <label style={styles.label}>
                     RUT Alumno
@@ -99,20 +125,32 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
                 <label style={styles.label}>
                     Justificativo
                     <input
-                        type="checkbox"
-                        checked={justificativo}
-                        onChange={(e) => setJustificativo(e.target.checked)}
+                        type="text"
+                        value={justificativo ? 'Presenta Justificativo' : 'No Presenta Justificativo'}
+                        readOnly
+                        style={{ ...styles.input, cursor: 'not-allowed' }}
                     />
                 </label>
+                <button type="button" onClick={openJustificativoModal} style={styles.button}>
+                    Editar Justificativo
+                </button>
                 <button type="submit" style={styles.button}>
                     {currentData ? 'Actualizar' : 'Guardar'}
                 </button>
-               
             </form>
+
+            {/* Modal para editar justificativo */}
+            <JustificativoModal 
+                isOpen={modalOpen} 
+                onClose={() => setModalOpen(false)} 
+                onSubmit={handleJustificativoUpdate} 
+                currentJustificativo={justificativo} 
+            />
         </div>
     );
 };
 
 export default AttendanceForm;
+
 
 

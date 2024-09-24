@@ -5,6 +5,7 @@ import AttendanceList from '../components/Attendance/AttendanceList';
 const AttendancePage = () => {
     const [showAttendanceList, setShowAttendanceList] = useState(false);
     const [selectedAtraso, setSelectedAtraso] = useState(null);
+    const [updated, setUpdated] = useState(false); // Estado para controlar la actualización
 
     const toggleAttendanceList = () => {
         setShowAttendanceList(prev => !prev);
@@ -16,21 +17,26 @@ const AttendancePage = () => {
         setShowAttendanceList(false); // Ocultar lista al editar
     };
 
+    const handleSuccess = () => {
+        setUpdated(prev => !prev); // Cambiar el estado para forzar la actualización de la lista
+    };
+
     return (
         <div>
             <h1>Control de Atrasos</h1>
             <AttendanceForm 
-                onSuccess={() => window.location.reload()} 
+                onSuccess={handleSuccess} // Usar el método para manejar éxito
                 currentData={selectedAtraso} 
-                onListClick={toggleAttendanceList} // Pasar la función al formulario
+                onToggleList={toggleAttendanceList} // Pasar la función al formulario
             />
             <button onClick={toggleAttendanceList}>
                 {showAttendanceList ? 'Ocultar Lista de Atrasos' : 'Mostrar Lista de Atrasos'}
             </button>
-            {showAttendanceList && <AttendanceList onEdit={handleEdit} />}
+            {showAttendanceList && <AttendanceList onEdit={handleEdit} updated={updated} />} {/* Pasar estado actualizado */}
         </div>
     );
 };
 
 export default AttendancePage;
+
 
