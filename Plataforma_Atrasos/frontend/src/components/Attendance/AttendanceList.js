@@ -143,8 +143,3 @@ const AttendanceList = ({ onEdit, updated }) => {
 };
 
 export default AttendanceList;
-
-
-
-
-
