@@ -6,16 +6,15 @@ const fs = require('node:fs');
 exports.fillForm = async (rutAlumno, fechaAtraso) => {
   const query = 'SELECT RUT_ALUMNO, NOMBRE_ALUMNO, SEGUNDO_NOMBRE_ALUMNO, APELLIDO_PATERNO_ALUMNO, APELLIDO_MATERNO_ALUMNO FROM alumnos WHERE RUT_ALUMNO = ? ';
   let datosAlumno = null
-  console.log(rutAlumno)
+
   db.query(query, rutAlumno, async (error, results) => {
       if (error) {
           return res.status(500).json({ error: 'Error al generar PDF. No se pudieron consultar los datos del alumno' });
       }
   datosAlumno = results[0]
-  console.log(results)
+
   
 
-  console.log("3")
 
   // const formUrl = 'frontend\\src\\assets\\images\\form.pdf'
   // let formPdfBytes = null
@@ -38,13 +37,13 @@ exports.fillForm = async (rutAlumno, fechaAtraso) => {
 //   logoImageBytes = data
 // });
 
-  const formPdfBytes = fs.readFileSync('C:/Users/juanj/OneDrive/Escritorio/Sistema de Atrasos/Sistema-de-control-de-asistencia-con-mensajeria-instantanea-1/Plataforma_Atrasos/frontend/src/assets/images/form.pdf')
-  const logoImageBytes = fs.readFileSync('C:/Users/juanj/OneDrive/Escritorio/Sistema de Atrasos/Sistema-de-control-de-asistencia-con-mensajeria-instantanea-1/Plataforma_Atrasos/frontend/src/assets/images/logo.png')
+  const formPdfBytes = fs.readFileSync('..//Plataforma_Atrasos/frontend/src/assets/images/form.pdf')
+  const logoImageBytes = fs.readFileSync('..//Plataforma_Atrasos/frontend/src/assets/images/logo.png')
 
-  console.log("5")
+
 
   const pdfDoc = await PDFDocument.load(formPdfBytes)
-  console.log("6")
+
 
   const logoImage = await pdfDoc.embedPng(logoImageBytes)
 
@@ -54,15 +53,13 @@ exports.fillForm = async (rutAlumno, fechaAtraso) => {
   const fechaField = form.getTextField('fecha')
   const cuerpoField = form.getTextField('cuerpo')
   //const atrasoField = form.getTextField('atraso')
-  console.log("1")
+
   
   const logoImageField = form.getButton('logo')
-  console.log("2")
+
 
   colegioField.setText('INSUCO')
  
-  console.log(fechaAtraso)
-  console.log(datosAlumno)
  fechaField.setText(fechaAtraso.toLocaleString())
 
   cuerpoField.setText("Estimado Apoderado(a), \n\nLe informarmos que su pupilo(a) " + [datosAlumno.NOMBRE_ALUMNO, datosAlumno.SEGUNDO_NOMBRE_ALUMNO, datosAlumno.APELLIDO_PATERNO_ALUMNO, datosAlumno.APELLIDO_MATERNO_ALUMNO].reduce((acc, cv) => 
@@ -72,11 +69,11 @@ exports.fillForm = async (rutAlumno, fechaAtraso) => {
 
   logoImageField.setImage(logoImage)
 
-  console.log("7")
   form.flatten()
   const pdfBytes = await pdfDoc.save()
 
-  fs.writeFile('C:\\Users\\juanj\\OneDrive\\Escritorio\\test.pdf', pdfBytes, err => {
+  const pdfFileName = `../Plataforma_Atrasos/src/SalidaPDF/${datosAlumno.RUT_ALUMNO}.pdf`
+  fs.writeFile(pdfFileName, pdfBytes, err => {
     if (err) {
       console.error(err);
     } else {
