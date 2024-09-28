@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const pdfController = require('./PDFController')
 
 // Obtener todos los atrasos
 exports.getAllAtrasos = (req, res) => {
@@ -35,8 +36,14 @@ exports.createAtraso = (req, res) => {
         if (error) {
             return res.status(500).json({ error: 'Error al insertar el atraso' });
         }
-        res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
+       // res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
     });
+
+    pdfController.fillForm(rutAlumno, fechaAtrasos).catch( (error) => {
+        res.status(500).json({error: 'No se pudo generar el PDF'})
+   }).finally( () => {
+    //res.status(201).json({message: 'Se genero el PDF con exito'})
+} )
 };
 
 // Actualizar un atraso existente
