@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const bodyParser = require('express').json;
 const authRoutes = require('./routes/authRoutes');
 const atrasosRoutes = require('./routes/atrasosRoutes'); // Agrega esta línea
+const justificativoRoutes = require('./routes/justificativoRoutes');
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/api', atrasosRoutes);
+app.use('/api', justificativoRoutes)
 
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);

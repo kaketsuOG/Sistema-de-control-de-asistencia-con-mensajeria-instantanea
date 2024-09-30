@@ -1,33 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import JustificativoModal from './JustificativoModal'; // Asegúrate de importar el modal
 
-const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
+const AttendanceForm = ({ onSuccess, currentData }) => {
     const [rutAlumno, setRutAlumno] = useState(currentData?.rutAlumno || '');
     const [fechaAtrasos, setFechaAtraso] = useState(currentData?.fechaAtrasos || '');
-    const [justificativo, setJustificativo] = useState(currentData?.justificativo || false);
+    const [residenciaJustificativo, setResidenciaJustificativo] = useState(false);
+    const [mostrarJustificativo, setMostrarJustificativo] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [modalOpen, setModalOpen] = useState(false);
+    const [notificationVisible, setNotificationVisible] = useState(false);
+    // Efecto para limpiar el estado al cambiar el currentData
+    useEffect(() => {
+        if (!currentData) {
+            resetForm();
+        } else {
+            setRutAlumno(currentData.rutAlumno);
+            setFechaAtraso(currentData.fechaAtrasos);
+            setResidenciaJustificativo(false); // Resetea el justificativo
+            setMostrarJustificativo(false); // Resetea la visualización del justificativo
+            setError('');
+        }
+    }, [currentData]);
+
+    // Función para reiniciar el formulario
+    const resetForm = () => {
+        setRutAlumno('');
+        setFechaAtraso('');
+        setResidenciaJustificativo(false);
+        setMostrarJustificativo(false);
+        setError('');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        setSuccess('');
         try {
             const url = currentData 
                 ? `http://localhost:3000/api/atrasos/${currentData.id}`
                 : 'http://localhost:3000/api/atrasos';
             const method = currentData ? axios.put : axios.post;
-            const response = await method(url, { rutAlumno, fechaAtrasos, justificativo });
-            
+            const response = await method(url, { rutAlumno, fechaAtrasos, justificativo: residenciaJustificativo ? 1 : 0 });
+
             if (response.status >= 200 && response.status < 300) {
-                setSuccess('Atraso registrado con éxito');
-                onSuccess();  // Llama a la función de éxito proporcionada
-                // Limpia el formulario
-                setRutAlumno('');
-                setFechaAtraso('');
-                setJustificativo(false);
+                setNotificationVisible(true); // Mostrar notificación
+                setTimeout(() => {
+                    setNotificationVisible(false); // Ocultar después de 3 segundos
+                }, 3000);
+                
+                if (onSuccess) {
+                    onSuccess(); // Actualiza la lista si es necesario
+                }
+
+                resetForm(); // Limpia el formulario después de un registro exitoso
             } else {
                 setError('Error en la solicitud. Código de estado: ' + response.status);
             }
@@ -36,14 +59,30 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
             setError('Error al guardar el atraso: ' + err.message);
         }
     };
+    
+    // Efecto para manejar la visibilidad de la notificación
+    useEffect(() => {
+        if (notificationVisible) {
+            const timer = setTimeout(() => {
+                setNotificationVisible(false);
+            }, 3000); // Ocultar la notificación después de 3 segundos
+            return () => clearTimeout(timer); // Limpiar el temporizador si el componente se desmonta
+        }
+    }, [notificationVisible]);
 
-    const handleJustificativoUpdate = (newJustificativo) => {
-        setJustificativo(newJustificativo);
-        setModalOpen(false); // Cerrar el modal después de actualizar
-    };
-
-    const openJustificativoModal = () => {
-        setModalOpen(true);
+    const checkJustificativoResidencia = async () => {
+        try {
+            const response = await axios.get(`http://localhost:3000/api/alumnos/${rutAlumno}/residencia`);
+            const tieneJustificativo = response.data.justificativo_residencia === 1;
+            setResidenciaJustificativo(tieneJustificativo);
+            setMostrarJustificativo(true); // Mostrar resultado
+            setError('');
+        } catch (err) {
+            setResidenciaJustificativo(false);
+            setMostrarJustificativo(false); // Resetea si hay un error
+            setError('Error al verificar justificativo de residencia');
+            console.error('Error en la verificación:', err);
+        }
     };
 
     // Estilos en línea
@@ -72,17 +111,17 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
             marginBottom: '20px',
             border: '1px solid #ccc',
             borderRadius: '4px',
-            width: '90%',
+            width: '100%',
         },
         button: {
             padding: '10px',
-            backgroundColor: '#007bff', // azul
+            backgroundColor: '#007bff', // Azul
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
             width: '100%',
-            marginBottom: '10px', // Espacio entre botones
+            marginBottom: '10px',
         },
         error: {
             color: '#dc3545',
@@ -94,16 +133,39 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
             textAlign: 'center',
             marginBottom: '15px',
         },
+        justificativoText: {
+            textAlign: 'center',
+            marginBottom: '15px',
+            fontWeight: 'bold',
+            color: '#007bff',
+        },
+        inputContainer: {
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '20px',
+        },
+        notification: {
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+            transition: 'opacity 0.3s',
+            opacity: notificationVisible ? 1 : 0,
+            pointerEvents: notificationVisible ? 'auto' : 'none',
+        },
     };
 
     return (
         <div style={styles.container}>
             <h2 style={styles.title}>{currentData ? 'Editar Atraso' : 'Agregar Atraso'}</h2>
             {error && <p style={styles.error}>{error}</p>}
-            {success && <p style={styles.success}>{success}</p>}
             <form onSubmit={handleSubmit}>
-                <label style={styles.label}>
-                    RUT Alumno
+                <div style={styles.inputContainer}>
+                    <label style={styles.label}>RUT Alumno</label>
                     <input
                         type="text"
                         value={rutAlumno}
@@ -111,9 +173,21 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
                         required
                         style={styles.input}
                     />
-                </label>
-                <label style={styles.label}>
-                    Fecha del Atraso
+                    <button 
+                        type="button" 
+                        onClick={checkJustificativoResidencia} 
+                        style={{ ...styles.button, marginLeft: '10px', width: 'auto' }}
+                    >
+                        Verificar
+                    </button>
+                </div>
+                {mostrarJustificativo && (
+                    <p style={styles.justificativoText}>
+                        {residenciaJustificativo ? 'Presenta Justificativo' : 'No Presenta Justificativo'}
+                    </p>
+                )}
+                <div>
+                    <label style={styles.label}>Fecha del Atraso</label>
                     <input
                         type="date"
                         value={fechaAtrasos}
@@ -121,36 +195,18 @@ const AttendanceForm = ({ onSuccess, currentData, onToggleList }) => {
                         required
                         style={styles.input}
                     />
-                </label>
-                <label style={styles.label}>
-                    Justificativo
-                    <input
-                        type="text"
-                        value={justificativo ? 'Presenta Justificativo' : 'No Presenta Justificativo'}
-                        readOnly
-                        style={{ ...styles.input, cursor: 'not-allowed' }}
-                    />
-                </label>
-                <button type="button" onClick={openJustificativoModal} style={styles.button}>
-                    Editar Justificativo
-                </button>
+                </div>
                 <button type="submit" style={styles.button}>
                     {currentData ? 'Actualizar' : 'Guardar'}
                 </button>
             </form>
 
-            {/* Modal para editar justificativo */}
-            <JustificativoModal 
-                isOpen={modalOpen} 
-                onClose={() => setModalOpen(false)} 
-                onSubmit={handleJustificativoUpdate} 
-                currentJustificativo={justificativo} 
-            />
+            {/* Notificación emergente */}
+            <div style={styles.notification}>
+                Atraso registrado con éxito
+            </div>
         </div>
     );
 };
 
 export default AttendanceForm;
-
-
-

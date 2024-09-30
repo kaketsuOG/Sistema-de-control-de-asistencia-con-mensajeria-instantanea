@@ -1,39 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
-import JustificativoModal from './JustificativoModal'; // Importar el modal
 
-const AttendanceList = ({ onEdit, updated }) => {
+const AttendanceList = ({ updated }) => {
     const [atrasos, setAtrasos] = useState([]);
-    const [filteredAtrasos, setFilteredAtrasos] = useState([]); // Estado para los atrasos filtrados
-    const [modalOpen, setModalOpen] = useState(false);
-    const [currentAtraso, setCurrentAtraso] = useState(null);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+    const [filteredAtrasos, setFilteredAtrasos] = useState([]);
 
-    // Estados para los filtros
-    const [searchTerm, setSearchTerm] = useState(''); // Filtro por nombre
-    const [searchCurso, setSearchCurso] = useState(''); // Filtro por curso
-    const [searchFecha, setSearchFecha] = useState(''); // Filtro por fecha
-    const [searchJustificativo, setSearchJustificativo] = useState(''); // Filtro por justificativo
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchCurso, setSearchCurso] = useState('');
+    const [searchFecha, setSearchFecha] = useState('');
+    const [searchJustificativo, setSearchJustificativo] = useState('');
 
-    const [showFilters, setShowFilters] = useState(false); // Estado para mostrar/ocultar filtros
+    const [showFilters, setShowFilters] = useState(false);
 
+    // Obtener atrasos al montar el componente o cuando se actualice 'updated'
     useEffect(() => {
         const fetchAtrasos = async () => {
             try {
                 const response = await axios.get('http://localhost:3000/api/atrasos');
                 setAtrasos(response.data);
-                setFilteredAtrasos(response.data); // Inicialmente, todos los atrasos están filtrados
+                setFilteredAtrasos(response.data);
             } catch (err) {
                 console.error('Error al obtener atrasos', err);
             }
         };
 
         fetchAtrasos();
-    }, [updated]);
+    }, [updated]); // Actualiza la lista cuando 'updated' cambie
 
-    // Filtrar los atrasos cuando alguno de los términos de búsqueda cambia
+    // Filtrar atrasos cuando cambian los filtros de búsqueda
     useEffect(() => {
         const filtered = atrasos.filter(atraso => {
             const matchesNombre = atraso.NOMBRE_COMPLETO.toLowerCase().includes(searchTerm.toLowerCase());
@@ -48,33 +43,7 @@ const AttendanceList = ({ onEdit, updated }) => {
         setFilteredAtrasos(filtered);
     }, [searchTerm, searchCurso, searchFecha, searchJustificativo, atrasos]);
 
-    const handleEditJustificativo = async (justificativo) => {
-        try {
-            await axios.put(`http://localhost:3000/api/atrasos/${currentAtraso.COD_ATRASOS}`, {
-                JUSTIFICATIVO: justificativo,
-            });
-            setAtrasos(atrasos.map(atraso => 
-                atraso.COD_ATRASOS === currentAtraso.COD_ATRASOS ? { ...atraso, JUSTIFICATIVO: justificativo } : atraso
-            ));
-            setSuccessMessage('Justificativo actualizado correctamente.');
-            setErrorMessage('');
-        } catch (err) {
-            console.error('Error al actualizar el justificativo', err);
-            setErrorMessage('Error al actualizar el justificativo.');
-            setSuccessMessage('');
-        }
-    };
-
-    const openModal = (atraso) => {
-        setCurrentAtraso(atraso);
-        setModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setModalOpen(false);
-        setCurrentAtraso(null);
-    };
-
+    // Estilos
     const styles = {
         container: {
             maxWidth: '600px',
@@ -119,16 +88,6 @@ const AttendanceList = ({ onEdit, updated }) => {
             flexGrow: 1,
             marginRight: '10px',
         },
-        button: {
-            backgroundColor: '#007bff',
-            color: 'white',
-            padding: '10px 15px',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            transition: 'background-color 0.3s ease',
-        },
         filterButton: {
             backgroundColor: '#e74c3c',
             color: 'white',
@@ -142,21 +101,12 @@ const AttendanceList = ({ onEdit, updated }) => {
             display: 'block',
             width: '20%',
         },
-        message: {
-            textAlign: 'center',
-            color: successMessage ? 'green' : 'red',
-            marginBottom: '15px',
-        },
     };
 
     return (
         <div style={styles.container}>
             <h2 style={styles.title}>Lista de Atrasos</h2>
 
-            {successMessage && <p style={styles.message}>{successMessage}</p>}
-            {errorMessage && <p style={styles.message}>{errorMessage}</p>}
-
-            {/* Botón para mostrar/ocultar los filtros */}
             <button 
                 onClick={() => setShowFilters(prev => !prev)} 
                 style={styles.filterButton}
@@ -164,7 +114,6 @@ const AttendanceList = ({ onEdit, updated }) => {
                 {showFilters ? 'Ocultar' : 'Filtrar'}
             </button>
 
-            {/* Filtros (solo se muestran si el estado showFilters es true) */}
             {showFilters && (
                 <div style={styles.filterGroup}>
                     <input
@@ -201,33 +150,21 @@ const AttendanceList = ({ onEdit, updated }) => {
             )}
 
             <ul style={styles.list}>
-                {filteredAtrasos.map(atraso => (
-                    <li key={atraso.COD_ATRASOS} style={styles.listItem}>
-                        <div style={styles.detail}>
-                            <strong>Nombre:</strong> {atraso.NOMBRE_COMPLETO} <br />
-                            <strong>Curso:</strong> {atraso.NOMBRE_CURSO} <br />
-                            <strong>Fecha:</strong> {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')} <br />
-                            <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? 'Sí' : 'No'}
-                        </div>
-                        <div>
-                            <button 
-                                onClick={() => openModal(atraso)} 
-                                style={styles.button}>
-                                Editar 
-                            </button>
-                        </div>
-                    </li>
-                ))}
+                {filteredAtrasos
+                    .sort((a, b) => new Date(b.FECHA_ATRASOS) - new Date(a.FECHA_ATRASOS)) // Ordenar por fecha (más reciente primero)
+                    .map(atraso => (
+                        <li key={atraso.COD_ATRASOS} style={styles.listItem}>
+                            <div style={styles.detail}>
+                                <strong>Nombre:</strong> {atraso.NOMBRE_COMPLETO} <br />
+                                <strong>Curso:</strong> {atraso.NOMBRE_CURSO} <br />
+                                <strong>Fecha:</strong> {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')} <br />
+                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? 'Sí' : 'No'}
+                            </div>
+                        </li>
+                    ))}
             </ul>
-
-            <JustificativoModal 
-                isOpen={modalOpen} 
-                onClose={closeModal} 
-                onSubmit={handleEditJustificativo} 
-                currentJustificativo={currentAtraso ? currentAtraso.JUSTIFICATIVO : false} 
-            />
         </div>
     );
 };
 
-export default AttendanceList
+export default AttendanceList;
