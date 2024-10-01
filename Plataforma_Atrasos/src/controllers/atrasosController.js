@@ -41,7 +41,7 @@ exports.createAtraso = (req, res) => {
 
         // Solo genera el PDF si la inserción fue exitosa
         try {
-            await pdfController.fillForm(rutAlumno, fechaAtrasos);
+            pdfController.fillForm(rutAlumno, fechaAtrasos);
             res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
         } catch (pdfError) {
             console.error('Error al generar PDF:', pdfError);

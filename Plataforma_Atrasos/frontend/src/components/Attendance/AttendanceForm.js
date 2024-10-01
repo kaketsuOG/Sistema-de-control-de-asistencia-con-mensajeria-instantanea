@@ -41,8 +41,6 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             const response = await method(url, { rutAlumno, fechaAtrasos, justificativo: residenciaJustificativo ? 1 : 0 });
 
             if (response.status >= 200 && response.status < 300) {
-                // Generar PDF después de guardar el atraso
-                await generatePDF(rutAlumno, new Date()); // Asegúrate de enviar la fecha correcta
 
                 // Mostrar la notificación
                 setSuccessMessage('Atraso registrado y PDF generado con éxito.');
@@ -62,18 +60,7 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         }
     };
 
-    // Función para generar el PDF
-    const generatePDF = async (rutAlumno, fechaAtraso) => {
-        try {
-            const pdfResponse = await axios.post('http://localhost:3000/api/pdf', { rutAlumno, fechaAtraso });
-            if (pdfResponse.status !== 200) {
-                throw new Error('Error al generar el PDF');
-            }
-        } catch (error) {
-            console.error('Error al generar el PDF:', error);
-            setError('Error al generar el PDF');
-        }
-    };
+    
 
     const checkJustificativoResidencia = async () => {
         try {
