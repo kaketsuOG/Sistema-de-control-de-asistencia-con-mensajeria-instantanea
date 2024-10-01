@@ -15,5 +15,8 @@ router.put('/atrasos/:id', atrasosController.updateAtraso);
 // Eliminar un atraso
 router.delete('/atrasos/:id', atrasosController.deleteAtraso);
 
+// Nueva ruta para obtener los atrasos del día
+router.get('/atrasos/dia', atrasosController.getAtrasosDelDia);
 
+router.get('/reports', atrasosController.getAtrasosDelDia);
 module.exports = router;

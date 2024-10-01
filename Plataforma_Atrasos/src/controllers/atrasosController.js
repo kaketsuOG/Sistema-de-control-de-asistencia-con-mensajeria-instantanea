@@ -84,3 +84,23 @@ exports.deleteAtraso = (req, res) => {
         res.status(200).json({ message: 'Atraso eliminado con éxito' });
     });
 };
+
+
+
+
+// En tu controlador de atrasos
+exports.getAtrasosDelDia = (req, res) => {
+    const fechaHoy = new Date();
+    const inicioDelDia = new Date(fechaHoy.setHours(0, 0, 0, 0));
+    const finDelDia = new Date(fechaHoy.setHours(23, 59, 59, 999));
+
+    const query = 'SELECT * FROM ATRASOS WHERE FECHA_ATRASOS BETWEEN ? AND ?';
+    db.query(query, [inicioDelDia, finDelDia], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error al obtener los atrasos' });
+        }
+        res.json(results);
+    });
+};
+
+

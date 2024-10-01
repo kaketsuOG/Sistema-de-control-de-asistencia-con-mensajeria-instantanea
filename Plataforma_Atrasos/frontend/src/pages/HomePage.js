@@ -5,7 +5,9 @@ import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
 import AttendancePage from './AttendancePage'; // Asegúrate de que la ruta sea correcta
+
 import logo from '../assets/images/logo.png'; // Importa la imagen del logo
+
 
 
 const HomePage = () => {
@@ -128,13 +130,11 @@ const HomePage = () => {
                             onClick={toggleAttendance} // Cambia aquí para mostrar/ocultar AttendancePage
                         >
                             <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
-
                             Control de atrasos
-
                         </li>
                         <li
                             style={styles.sidebarListItem}
-                            onClick={() => handleNavigation('/reports')}
+                            onClick={() => handleNavigation('/reports')} // Asegúrate que esta ruta esté configurada
                         >
                             <img src={reportIcon} alt="Reportes" style={styles.icon} />
                             Reportes

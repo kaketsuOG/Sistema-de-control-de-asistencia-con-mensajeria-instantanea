@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const atrasosRoutes = require('./routes/atrasosRoutes'); // Agrega esta línea
 const justificativoRoutes = require('./routes/justificativoRoutes');
 
+
 dotenv.config();
 
 const app = express();

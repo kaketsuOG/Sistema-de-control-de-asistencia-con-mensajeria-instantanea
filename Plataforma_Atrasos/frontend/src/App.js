@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
 import AttendancePage from './pages/AttendancePage';
 import ProtectedRoute from './components/ProtectedRoute';
+import ReportsPage from './pages/ReportsPage';
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
 
         {/* Ruta protegida para la página principal */}
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+
+        <Route path="/reports" element={<ProtectedRoute><ReportsPage/></ProtectedRoute>} />
+        
       </Routes>
     </Router>
   );
