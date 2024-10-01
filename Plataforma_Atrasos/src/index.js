@@ -20,6 +20,8 @@ app.use('/auth', authRoutes);
 app.use('/api', atrasosRoutes);
 app.use('/api', justificativoRoutes)
 
+
+
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });

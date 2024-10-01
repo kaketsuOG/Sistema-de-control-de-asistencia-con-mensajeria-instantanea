@@ -8,20 +8,20 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
     const [mostrarJustificativo, setMostrarJustificativo] = useState(false);
     const [error, setError] = useState('');
     const [notificationVisible, setNotificationVisible] = useState(false);
-    // Efecto para limpiar el estado al cambiar el currentData
+    const [successMessage, setSuccessMessage] = useState('');
+
     useEffect(() => {
         if (!currentData) {
             resetForm();
         } else {
             setRutAlumno(currentData.rutAlumno);
             setFechaAtraso(currentData.fechaAtrasos);
-            setResidenciaJustificativo(false); // Resetea el justificativo
-            setMostrarJustificativo(false); // Resetea la visualización del justificativo
+            setResidenciaJustificativo(false);
+            setMostrarJustificativo(false);
             setError('');
         }
     }, [currentData]);
 
-    // Función para reiniciar el formulario
     const resetForm = () => {
         setRutAlumno('');
         setFechaAtraso('');
@@ -41,11 +41,13 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             const response = await method(url, { rutAlumno, fechaAtrasos, justificativo: residenciaJustificativo ? 1 : 0 });
 
             if (response.status >= 200 && response.status < 300) {
-                setNotificationVisible(true); // Mostrar notificación
-                setTimeout(() => {
-                    setNotificationVisible(false); // Ocultar después de 3 segundos
-                }, 3000);
-                
+                // Generar PDF después de guardar el atraso
+                await generatePDF(rutAlumno, new Date()); // Asegúrate de enviar la fecha correcta
+
+                // Mostrar la notificación
+                setSuccessMessage('Atraso registrado y PDF generado con éxito.');
+                setNotificationVisible(true);
+
                 if (onSuccess) {
                     onSuccess(); // Actualiza la lista si es necesario
                 }
@@ -59,31 +61,44 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             setError('Error al guardar el atraso: ' + err.message);
         }
     };
-    
-    // Efecto para manejar la visibilidad de la notificación
-    useEffect(() => {
-        if (notificationVisible) {
-            const timer = setTimeout(() => {
-                setNotificationVisible(false);
-            }, 3000); // Ocultar la notificación después de 3 segundos
-            return () => clearTimeout(timer); // Limpiar el temporizador si el componente se desmonta
+
+    // Función para generar el PDF
+    const generatePDF = async (rutAlumno, fechaAtraso) => {
+        try {
+            const pdfResponse = await axios.post('http://localhost:3000/api/pdf', { rutAlumno, fechaAtraso });
+            if (pdfResponse.status !== 200) {
+                throw new Error('Error al generar el PDF');
+            }
+        } catch (error) {
+            console.error('Error al generar el PDF:', error);
+            setError('Error al generar el PDF');
         }
-    }, [notificationVisible]);
+    };
 
     const checkJustificativoResidencia = async () => {
         try {
             const response = await axios.get(`http://localhost:3000/api/alumnos/${rutAlumno}/residencia`);
             const tieneJustificativo = response.data.justificativo_residencia === 1;
             setResidenciaJustificativo(tieneJustificativo);
-            setMostrarJustificativo(true); // Mostrar resultado
+            setMostrarJustificativo(true);
             setError('');
         } catch (err) {
             setResidenciaJustificativo(false);
-            setMostrarJustificativo(false); // Resetea si hay un error
+            setMostrarJustificativo(false);
             setError('Error al verificar justificativo de residencia');
             console.error('Error en la verificación:', err);
         }
     };
+
+    // Efecto para manejar la visibilidad de la notificación
+    useEffect(() => {
+        if (notificationVisible) {
+            const timer = setTimeout(() => {
+                setNotificationVisible(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [notificationVisible]);
 
     // Estilos en línea
     const styles = {
@@ -202,9 +217,7 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             </form>
 
             {/* Notificación emergente */}
-            <div style={styles.notification}>
-                Atraso registrado con éxito
-            </div>
+            {notificationVisible && <div style={styles.notification}>{successMessage}</div>}
         </div>
     );
 };

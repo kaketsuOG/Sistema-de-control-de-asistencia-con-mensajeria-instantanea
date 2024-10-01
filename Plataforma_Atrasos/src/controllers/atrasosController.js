@@ -26,24 +26,28 @@ exports.createAtraso = (req, res) => {
     const { rutAlumno, justificativo } = req.body;
     const fechaAtrasos = new Date();
 
-    if (!rutAlumno || !fechaAtrasos) {
+    // Verifica que falten datos requeridos
+    if (!rutAlumno) {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
     const query = 'INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO) VALUES (?, ?, ?)';
 
-    db.query(query, [rutAlumno, fechaAtrasos, justificativo], (error, results) => {
+    // Realiza la inserción en la base de datos
+    db.query(query, [rutAlumno, fechaAtrasos, justificativo], async (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error al insertar el atraso' });
         }
-       // res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
-    });
 
-    pdfController.fillForm(rutAlumno, fechaAtrasos).catch( (error) => {
-        res.status(500).json({error: 'No se pudo generar el PDF'})
-   }).finally( () => {
-    //res.status(201).json({message: 'Se genero el PDF con exito'})
-} )
+        // Solo genera el PDF si la inserción fue exitosa
+        try {
+            await pdfController.fillForm(rutAlumno, fechaAtrasos);
+            res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
+        } catch (pdfError) {
+            console.error('Error al generar PDF:', pdfError);
+            res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
+        }
+    });
 };
 
 // Actualizar un atraso existente
