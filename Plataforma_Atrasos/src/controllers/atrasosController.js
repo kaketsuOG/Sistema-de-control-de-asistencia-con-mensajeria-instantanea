@@ -1,5 +1,63 @@
 const db = require('../config/db');
-const pdfController = require('./PDFController')
+const pdfController = require('./PDFController');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const QRCode = require('qrcode-terminal');
+const fs = require('fs');
+
+// Inicializa el cliente de WhatsApp
+const client = new Client({
+    authStrategy: new LocalAuth(),
+});
+
+// Genera y muestra el código QR en la terminal
+client.on('qr', (qr) => {
+    QRCode.generate(qr, { small: true });
+});
+
+// Inicia el cliente de WhatsApp
+client.initialize();
+
+// Maneja la autenticación
+client.on('authenticated', () => {
+    console.log('Cliente de WhatsApp autenticado');
+});
+
+// Maneja fallos de autenticación
+client.on('auth_failure', () => {
+    console.log('Fallo en la autenticación, escanea el QR nuevamente');
+    client.initialize(); // Reiniciar el cliente para mostrar un nuevo QR
+});
+
+// Maneja la desconexión
+client.on('disconnected', (reason) => {
+    console.log('Cliente de WhatsApp desconectado:', reason);
+    // Opcional: Podrías agregar lógica adicional aquí si es necesario
+});
+
+// Función para enviar un PDF
+const sendPDF = async (number, filePath) => {
+    try {
+        const formattedNumber = number.includes('@c.us') ? number : `${number}@c.us`;
+        console.log(`Enviando archivo a: ${formattedNumber} con el archivo: ${filePath}`);
+
+        // Verifica si el archivo existe
+        if (filePath && fs.existsSync(filePath)) {
+            console.log('El archivo existe, procediendo a enviar el PDF...');
+
+            // Crea una instancia de MessageMedia desde el archivo
+            const media = await MessageMedia.fromFilePath(filePath);
+
+            // Envía el archivo PDF
+            await client.sendMessage(formattedNumber, media);
+
+            console.log('PDF enviado con éxito');
+        } else {
+            console.error('Error: La ruta del archivo es incorrecta o el archivo no existe');
+        }
+    } catch (error) {
+        console.error('Error al enviar el PDF por WhatsApp:', error);
+    }
+};
 
 // Obtener todos los atrasos
 exports.getAllAtrasos = (req, res) => {
@@ -20,29 +78,45 @@ exports.getAllAtrasos = (req, res) => {
     });
 };
 
-
 // Registrar un nuevo atraso
-exports.createAtraso = (req, res) => {
+exports.createAtraso = async (req, res) => {
     const { rutAlumno, justificativo } = req.body;
     const fechaAtrasos = new Date();
 
-    // Verifica que falten datos requeridos
     if (!rutAlumno) {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
     const query = 'INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO) VALUES (?, ?, ?)';
 
-    // Realiza la inserción en la base de datos
     db.query(query, [rutAlumno, fechaAtrasos, justificativo], async (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error al insertar el atraso' });
         }
 
-        // Solo genera el PDF si la inserción fue exitosa
         try {
-            pdfController.fillForm(rutAlumno, fechaAtrasos);
-            res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
+            // Genera el PDF
+            const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
+            console.log('Ruta del PDF generado:', pdfPath);
+
+            const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+            db.query(getCelularQuery, [rutAlumno], async (error, results) => {
+                if (error) {
+                    console.error('Error al obtener el número de celular del apoderado:', error);
+                    return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
+                }
+
+                const celularApoderado = results[0]?.N_CELULAR_APODERADO;
+                if (celularApoderado) {
+                    // Enviar solo el PDF por WhatsApp
+                    await sendPDF(celularApoderado, pdfPath);
+                } else {
+                    console.error('Error: No se encontró el número de celular del apoderado.');
+                    return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
+                }
+
+                res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
+            });
         } catch (pdfError) {
             console.error('Error al generar PDF:', pdfError);
             res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
@@ -70,7 +144,6 @@ exports.updateAtraso = (req, res) => {
     });
 };
 
-
 // Eliminar un atraso
 exports.deleteAtraso = (req, res) => {
     const { id } = req.params;
@@ -85,10 +158,7 @@ exports.deleteAtraso = (req, res) => {
     });
 };
 
-
-
-
-// En tu controlador de atrasos
+// Obtener atrasos del día
 exports.getAtrasosDelDia = (req, res) => {
     const { fecha } = req.query; // Recibe la fecha desde el frontend como un parámetro de consulta
 
@@ -108,6 +178,3 @@ exports.getAtrasosDelDia = (req, res) => {
         res.json(results);
     });
 };
-
-
-
