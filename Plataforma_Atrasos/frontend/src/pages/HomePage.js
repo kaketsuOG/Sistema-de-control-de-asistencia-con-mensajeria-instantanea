@@ -5,15 +5,15 @@ import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
 import AttendancePage from './AttendancePage'; // Asegúrate de que la ruta sea correcta
+import ReportsPage from './ReportsPage'; // Asegúrate de importar ReportsPage
 
 import logo from '../assets/images/logo.png'; // Importa la imagen del logo
-
-
 
 const HomePage = () => {
     const navigate = useNavigate();
     const [userName, setUserName] = useState('');
     const [showAttendance, setShowAttendance] = useState(false); // Estado para mostrar/ocultar AttendancePage
+    const [showReports, setShowReports] = useState(false); // Estado para mostrar/ocultar ReportsPage
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userName');
@@ -35,6 +35,12 @@ const HomePage = () => {
 
     const toggleAttendance = () => {
         setShowAttendance(!showAttendance); // Cambia el estado al hacer clic
+        setShowReports(false); // Oculta los reportes
+    };
+
+    const toggleReports = () => {
+        setShowReports(!showReports); // Cambia el estado al hacer clic
+        setShowAttendance(false); // Oculta la asistencia
     };
 
     const styles = {
@@ -134,7 +140,7 @@ const HomePage = () => {
                         </li>
                         <li
                             style={styles.sidebarListItem}
-                            onClick={() => handleNavigation('/reports')} // Asegúrate que esta ruta esté configurada
+                            onClick={toggleReports} // Cambia aquí para mostrar/ocultar ReportsPage
                         >
                             <img src={reportIcon} alt="Reportes" style={styles.icon} />
                             Reportes
@@ -166,8 +172,8 @@ const HomePage = () => {
                 </div>
                 {/* Main view */}
                 <div style={styles.contentArea}>
-                    {/* Muestra el mensaje de bienvenida solo si showAttendance es false */}
-                    {!showAttendance && (
+                    {/* Muestra el mensaje de bienvenida solo si showAttendance y showReports son false */}
+                    {!showAttendance && !showReports && (
                         <>
                             <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
                             <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
@@ -176,6 +182,9 @@ const HomePage = () => {
                     
                     {/* Muestra AttendancePage si showAttendance es true */}
                     {showAttendance && <AttendancePage />}
+                    
+                    {/* Muestra ReportsPage si showReports es true */}
+                    {showReports && <ReportsPage />}
                 </div>
             </div>
         </div>
@@ -183,4 +192,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-

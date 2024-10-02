@@ -90,9 +90,15 @@ exports.deleteAtraso = (req, res) => {
 
 // En tu controlador de atrasos
 exports.getAtrasosDelDia = (req, res) => {
-    const fechaHoy = new Date();
-    const inicioDelDia = new Date(fechaHoy.setHours(0, 0, 0, 0));
-    const finDelDia = new Date(fechaHoy.setHours(23, 59, 59, 999));
+    const { fecha } = req.query; // Recibe la fecha desde el frontend como un parámetro de consulta
+
+    if (!fecha) {
+        return res.status(400).json({ error: 'Se requiere una fecha' });
+    }
+
+    // Convertir la fecha proporcionada a formato de JavaScript y establecer el inicio y fin del día
+    const inicioDelDia = new Date(`${fecha}T00:00:00`);
+    const finDelDia = new Date(`${fecha}T23:59:59`);
 
     const query = 'SELECT * FROM ATRASOS WHERE FECHA_ATRASOS BETWEEN ? AND ?';
     db.query(query, [inicioDelDia, finDelDia], (error, results) => {
@@ -102,5 +108,6 @@ exports.getAtrasosDelDia = (req, res) => {
         res.json(results);
     });
 };
+
 
 
