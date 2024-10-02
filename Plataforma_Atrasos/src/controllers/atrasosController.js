@@ -6,12 +6,14 @@ const fs = require('fs');
 
 // Inicializa el cliente de WhatsApp
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth(), // Esto asegura que se guarde la sesión automáticamente
+    puppeteer: { headless: true } // Asegura que se ejecute sin abrir un navegador
 });
 
 // Genera y muestra el código QR en la terminal
 client.on('qr', (qr) => {
-    QRCode.generate(qr, { small: true });
+    console.log('Escanea el código QR para conectar con WhatsApp');
+    QRCode.generate(qr, { small: true }); // Muestra el código QR en la terminal
 });
 
 // Inicia el cliente de WhatsApp
@@ -19,19 +21,20 @@ client.initialize();
 
 // Maneja la autenticación
 client.on('authenticated', () => {
-    console.log('Cliente de WhatsApp autenticado');
+    console.log('Cliente de WhatsApp autenticado exitosamente');
 });
 
 // Maneja fallos de autenticación
 client.on('auth_failure', () => {
-    console.log('Fallo en la autenticación, escanea el QR nuevamente');
-    client.initialize(); // Reiniciar el cliente para mostrar un nuevo QR
+    console.log('Fallo en la autenticación, reiniciando...');
+    client.initialize(); // Reinicia el cliente si la autenticación falla
 });
 
 // Maneja la desconexión
 client.on('disconnected', (reason) => {
     console.log('Cliente de WhatsApp desconectado:', reason);
-    // Opcional: Podrías agregar lógica adicional aquí si es necesario
+    client.destroy(); // Destruye el cliente para asegurarse de que no quedan sesiones abiertas
+    client.initialize(); // Reinicia el cliente para que vuelva a generar el código QR
 });
 
 // Función para enviar un PDF
