@@ -109,6 +109,7 @@ const HomePage = () => {
             padding: '20px',
             backgroundColor: '#f7f9f9',
             flexGrow: '1',
+            marginTop: '-20px',
         },
         welcomeText: {
             fontSize: '24px',

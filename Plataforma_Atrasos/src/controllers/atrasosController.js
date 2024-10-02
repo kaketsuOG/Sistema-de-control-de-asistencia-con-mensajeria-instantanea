@@ -100,14 +100,28 @@ exports.getAtrasosDelDia = (req, res) => {
     const inicioDelDia = new Date(`${fecha}T00:00:00`);
     const finDelDia = new Date(`${fecha}T23:59:59`);
 
-    const query = 'SELECT * FROM ATRASOS WHERE FECHA_ATRASOS BETWEEN ? AND ?';
+    // Corrige el nombre de la tabla aquí
+    const query = `
+        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
+               CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
+               C.NOMBRE_CURSO
+        FROM ATRASOS A
+        JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
+        JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
+        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?
+    `;
+
     db.query(query, [inicioDelDia, finDelDia], (error, results) => {
         if (error) {
+            console.error('Error en la consulta SQL:', error); // Agrega esta línea para ver el error
             return res.status(500).json({ error: 'Error al obtener los atrasos' });
         }
         res.json(results);
     });
 };
+
+
+
 
 
 

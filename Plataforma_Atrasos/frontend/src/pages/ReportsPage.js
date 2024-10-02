@@ -16,7 +16,15 @@ const ReportsPage = () => {
 
     const styles = {
         pageContainer: {
+            marginTop: '10px',
             padding: '20px',
+        },
+        headerContainer: {
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center', // Para alinear verticalmente el texto y el botón
+            gap: '10px', // Espacio entre el texto y el botón
+            marginBottom: '20px',
         },
         toggleButton: {
             padding: '10px 20px',
@@ -31,10 +39,12 @@ const ReportsPage = () => {
 
     return (
         <div style={styles.pageContainer}>
-            <h1>Reportes de Atrasos</h1>
-            <button onClick={toggleReportList} style={styles.toggleButton}>
-                {showReportList ? 'Ocultar Reportes' : 'Mostrar Reportes'}
-            </button>
+            <div style={styles.headerContainer}>
+                <h1>Reportes de Atrasos</h1>
+                <button onClick={toggleReportList} style={styles.toggleButton}>
+                    {showReportList ? 'Ocultar Reportes' : 'Mostrar Reportes'}
+                </button>
+            </div>
 
             {/* Renderiza AttendanceReport si se solicita */}
             {showReportList && (
