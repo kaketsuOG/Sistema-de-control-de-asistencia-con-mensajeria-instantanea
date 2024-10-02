@@ -3,6 +3,7 @@ const pdfController = require('./PDFController');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const QRCode = require('qrcode-terminal');
 const fs = require('fs');
+const { startOfWeek, endOfWeek } = require('date-fns');
 
 // Inicializa el cliente de WhatsApp
 const client = new Client({
@@ -179,5 +180,55 @@ exports.getAtrasosDelDia = (req, res) => {
             return res.status(500).json({ error: 'Error al obtener los atrasos' });
         }
         res.json(results);
+    });
+};
+// *** Nueva Funcionalidad: Obtener atrasos semanales (de lunes a viernes) ***
+exports.getAtrasosSemanal = (req, res) => {
+    const { fecha } = req.query; // Recibe una fecha de referencia desde el frontend
+
+    if (!fecha) {
+        return res.status(400).json({ error: 'Se requiere una fecha de referencia' });
+    }
+
+    // Convertir la fecha proporcionada a un objeto Date
+    const fechaRef = new Date(fecha);
+    if (isNaN(fechaRef)) {
+        return res.status(400).json({ error: 'Fecha inválida' });
+    }
+
+    // Calcular el inicio y fin de la semana completa (Lunes a Domingo)
+    const inicioSemana = startOfWeek(fechaRef, { weekStartsOn: 1 }); // 1 = Lunes
+    const finSemana = endOfWeek(fechaRef, { weekStartsOn: 0.5 }); // 0 = Domingo
+
+    // Establecer las horas para abarcar todo el día
+    inicioSemana.setHours(0, 0, 0, 0); // Inicio del lunes
+    finSemana.setHours(23, 59, 59, 999); // Fin del domingo
+
+    // Debugging: Imprimir las fechas calculadas
+    console.log('Fecha de Referencia:', fechaRef.toISOString());
+    console.log('Inicio de Semana (Lunes):', inicioSemana.toISOString());
+    console.log('Fin de Semana (Domingo):', finSemana.toISOString());
+
+    const query = `
+        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
+               CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
+               C.NOMBRE_CURSO
+        FROM ATRASOS A
+        JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
+        JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
+        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?
+        ORDER BY A.FECHA_ATRASOS ASC
+    `;
+
+    db.query(query, [inicioSemana, finSemana], (error, results) => {
+        if (error) {
+            console.error('Error en la consulta de atrasos semanales:', error);
+            return res.status(500).json({ error: 'Error al obtener los atrasos semanales' });
+        }
+        res.status(200).json({
+            inicioSemana: inicioSemana.toISOString().split('T')[0],
+            finSemana: finSemana.toISOString().split('T')[0],
+            atrasos: results
+        });
     });
 };

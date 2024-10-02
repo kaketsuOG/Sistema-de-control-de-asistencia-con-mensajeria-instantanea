@@ -6,6 +6,9 @@ const atrasosController = require('../controllers/atrasosController');
 // Obtener todos los atrasos
 router.get('/atrasos', atrasosController.getAllAtrasos);
 
+// Ruta para obtener atrasos semanales
+router.get('/atrasos/semana', atrasosController.getAtrasosSemanal);
+
 // Registrar un nuevo atraso
 router.post('/atrasos', atrasosController.createAtraso);
 
