@@ -6,10 +6,7 @@ const fs = require('fs');
 const { startOfWeek, endOfWeek } = require('date-fns');
 
 // Inicializa el cliente de WhatsApp
-const client = new Client({
-    authStrategy: new LocalAuth(), // Esto asegura que se guarde la sesión automáticamente
-    puppeteer: { headless: true } // Asegura que se ejecute sin abrir un navegador
-});
+const client = new Client();
 
 // Genera y muestra el código QR en la terminal
 client.on('qr', (qr) => {
