@@ -1,9 +1,12 @@
+// src/pages/ReportsPage.js
+
 import React, { useEffect, useState } from 'react';
 import AttendanceReport from '../components/AttendanceReport'; // Verifica que la ruta sea correcta
-import AttendanceReportSemanal from '../components/AttendanceReportSemanal'; // Importa el nuevo componente
+import AttendanceReportCustomRange from '../components/AttendanceReportCustomRange';
 
 const ReportsPage = () => {
-    const [selectedReport, setSelectedReport] = useState(null); // Puede ser 'daily', 'weekly', o null
+    // Definir el estado para manejar la selección de reporte
+    const [selectedReport, setSelectedReport] = useState(null); // Inicialmente sin reporte seleccionado
 
     // Maneja la selección de reporte
     const handleReportSelection = (reportType) => {
@@ -82,10 +85,10 @@ const ReportsPage = () => {
                 </div>
             )}
 
-            {/* Renderiza AttendanceReportSemanal si se selecciona el reporte semanal */}
+            {/* Renderiza AttendanceReportCustomRange si se selecciona el reporte semanal */}
             {selectedReport === 'weekly' && (
                 <div>
-                    <AttendanceReportSemanal />
+                    <AttendanceReportCustomRange />
                 </div>
             )}
         </div>

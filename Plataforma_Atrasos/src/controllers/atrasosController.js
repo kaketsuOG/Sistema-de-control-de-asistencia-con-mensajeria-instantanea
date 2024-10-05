@@ -192,55 +192,69 @@ exports.getAtrasosDelDia = (req, res) => {
     });
 };
 // *** Nueva Funcionalidad: Obtener atrasos semanales (de lunes a viernes) ***
-exports.getAtrasosSemanal = (req, res) => {
-    const { fecha } = req.query; // Recibe una fecha de referencia desde el frontend
+exports.getAtrasosRango = (req, res) => {
+    const { startDate, endDate } = req.query;
 
-    if (!fecha) {
-        return res.status(400).json({ error: 'Se requiere una fecha de referencia' });
+    // Validar que ambas fechas estén presentes
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'Se requieren ambas fechas: startDate y endDate' });
     }
 
-    // Convertir la fecha proporcionada a un objeto Date
-    const fechaRef = new Date(fecha);
-    if (isNaN(fechaRef)) {
-        return res.status(400).json({ error: 'Fecha inválida' });
+    // Convertir las fechas a objetos Date
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Validar que las fechas sean válidas
+    if (isNaN(start) || isNaN(end)) {
+        return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD' });
     }
 
-
-
-
-
-    // Calcular el inicio y fin de la semana completa (Lunes a Domingo)
-    const inicioSemana = startOfWeek(fechaRef, { weekStartsOn: 1 }); // 1 = Lunes
-    const finSemana = endOfWeek(fechaRef, { weekStartsOn: 0.5 }); // 0 = Domingo
+    // Asegurarse de que startDate no sea posterior a endDate
+    if (start > end) {
+        return res.status(400).json({ error: 'startDate no puede ser posterior a endDate' });
+    }
 
     // Establecer las horas para abarcar todo el día
-    inicioSemana.setHours(0, 0, 0, 0); // Inicio del lunes
-    finSemana.setHours(23, 59, 59, 999); // Fin del domingo
+    start.setHours(0, 0, 0, 0); // Inicio del startDate
+    end.setHours(23, 59, 59, 999); // Fin del endDate
 
     // Debugging: Imprimir las fechas calculadas
-    console.log('Fecha de Referencia:', fechaRef.toISOString());
-    console.log('Inicio de Semana (Lunes):', inicioSemana.toISOString());
-    console.log('Fin de Semana (Domingo):', finSemana.toISOString());
+    console.log('Fecha de Inicio:', start.toISOString());
+    console.log('Fecha de Fin:', end.toISOString());
 
     const query = `
-        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
-               CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
-               C.NOMBRE_CURSO
-        FROM ATRASOS A
-        JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
-        JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
-        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?
-        ORDER BY A.FECHA_ATRASOS ASC
+        SELECT 
+            A.RUT_ALUMNO, 
+            A.FECHA_ATRASOS, 
+            A.JUSTIFICATIVO, 
+            CONCAT(
+                B.NOMBRE_ALUMNO, ' ', 
+                B.SEGUNDO_NOMBRE_ALUMNO, ' ', 
+                B.APELLIDO_PATERNO_ALUMNO, ' ', 
+                B.APELLIDO_MATERNO_ALUMNO
+            ) AS NOMBRE_COMPLETO, 
+            C.NOMBRE_CURSO
+        FROM 
+            ATRASOS A
+        JOIN 
+            ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
+        JOIN 
+            CURSOS C ON B.COD_CURSO = C.COD_CURSO
+        WHERE 
+            A.FECHA_ATRASOS BETWEEN ? AND ?
+        ORDER BY 
+            A.FECHA_ATRASOS ASC
     `;
 
-    db.query(query, [inicioSemana, finSemana], (error, results) => {
+    db.query(query, [start, end], (error, results) => {
         if (error) {
-            console.error('Error en la consulta de atrasos semanales:', error);
-            return res.status(500).json({ error: 'Error al obtener los atrasos semanales' });
+            console.error('Error en la consulta de atrasos por rango:', error);
+            return res.status(500).json({ error: 'Error al obtener los atrasos por rango' });
         }
+
         res.status(200).json({
-            inicioSemana: inicioSemana.toISOString().split('T')[0],
-            finSemana: finSemana.toISOString().split('T')[0],
+            startDate: start.toISOString().split('T')[0],
+            endDate: end.toISOString().split('T')[0],
             atrasos: results
         });
     });
