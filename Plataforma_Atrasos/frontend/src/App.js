@@ -28,7 +28,7 @@ function App() {
         <Route path="/reports" element={<ProtectedRoute><ReportsPage/></ProtectedRoute>} />
 
         {/* Ruta protegida para la página de atrasos */}
-        <Route path="/atrasos" element={<AtrasosPage />} />
+        <Route path="/atrasos" element={<ProtectedRoute><AtrasosPage /></ProtectedRoute>} />
 
         
       </Routes>
