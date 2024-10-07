@@ -102,11 +102,12 @@ exports.createAtraso = async (req, res) => {
         try {
             // Genera el PDF
             const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
-            console.log('Ruta del PDF generado:', pdfPath);
+            const pdfFileName = pdfPath.split('/').pop();
+            console.log('Nombre del PDF generado:', pdfFileName);
 
             // Actualizar el campo pdf_path en la tabla atrasos con el ID recién creado
             const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
-            db.query(updatePdfPathQuery, [pdfPath, codAtraso], (error, result) => {
+            db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (error, result) => {
                 if (error) {
                     console.error('Error al actualizar la ruta del PDF en la base de datos:', error);
                     return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });

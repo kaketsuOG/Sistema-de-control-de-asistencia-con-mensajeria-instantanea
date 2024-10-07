@@ -9,7 +9,7 @@ const AtrasosPage = () => {
     // Estados para filtros de búsqueda
     const [searchRut, setSearchRut] = useState('');
     const [searchName, setSearchName] = useState('');
-    const [searchDate, setSearchDate] = useState('');
+    //const [searchDate, setSearchDate] = useState('');
 
     const fetchAtrasos = async () => {
         try {
@@ -30,8 +30,8 @@ const AtrasosPage = () => {
     const filteredAtrasos = atrasos.filter((atraso) => {
         const matchesRut = atraso.RUT_ALUMNO.toLowerCase().includes(searchRut.toLowerCase());
         const matchesName = atraso.NOMBRE_COMPLETO.toLowerCase().includes(searchName.toLowerCase());
-        const matchesDate = searchDate ? new Date(atraso.FECHA_ATRASOS).toLocaleDateString() === searchDate : true;
-        return matchesRut && matchesName && matchesDate;
+        //const matchesDate = searchDate ? new Date(atraso.FECHA_ATRASOS).toLocaleDateString() === searchDate : true;
+        return matchesRut && matchesName //&& //matchesDate;
     });
 
     if (loading) {
@@ -71,6 +71,7 @@ const AtrasosPage = () => {
                         <tr>
                             <th style={styles.headerCell}>RUT Alumno</th>
                             <th style={styles.headerCell}>Fecha Atraso</th>
+                            <th style={styles.headerCell}>Hora Atraso</th>
                             <th style={styles.headerCell}>Justificativo</th>
                             <th style={styles.headerCell}>Nombre Completo</th>
                             <th style={styles.headerCell}>Curso</th>
@@ -78,10 +79,18 @@ const AtrasosPage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredAtrasos.map((atraso) => (
+                        {filteredAtrasos.map((atraso) => {
+                            const fecha = new Date(atraso.FECHA_ATRASOS);
+                            const fechaFormateada = fecha.toLocaleDateString();
+                            const horaFormateada = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Formato HH:MM
+                            console.log("aqui",atraso.PDF_PATH);
+                            
+                            return (
+                                
                             <tr key={atraso.COD_ATRASOS} style={styles.row}>
                                 <td style={styles.cell}>{atraso.RUT_ALUMNO}</td>
-                                <td style={styles.cell}>{new Date(atraso.FECHA_ATRASOS).toLocaleDateString()}</td>
+                                <td style={styles.cell}>{fechaFormateada}</td>
+                                <td style={styles.cell}>{horaFormateada}</td>
                                 <td style={styles.cell}>{atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
                                 <td style={styles.cell}>{atraso.NOMBRE_COMPLETO}</td>
                                 <td style={styles.cell}>{atraso.NOMBRE_CURSO}</td>
@@ -100,8 +109,12 @@ const AtrasosPage = () => {
                                         'No disponible'
                                     )}
                                 </td>
+
                             </tr>
-                        ))}
+                            
+                            );
+                        })}
+                        
                     </tbody>
                 </table>
             )}
