@@ -83,7 +83,7 @@ const AtrasosPage = () => {
                             const fecha = new Date(atraso.FECHA_ATRASOS);
                             const fechaFormateada = fecha.toLocaleDateString();
                             const horaFormateada = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Formato HH:MM
-                            console.log("aqui",atraso.PDF_PATH);
+                            console.log("aqui",atraso);
                             
                             return (
                                 
@@ -95,9 +95,9 @@ const AtrasosPage = () => {
                                 <td style={styles.cell}>{atraso.NOMBRE_COMPLETO}</td>
                                 <td style={styles.cell}>{atraso.NOMBRE_CURSO}</td>
                                 <td style={styles.cell}>
-                                    {atraso.PDF_PATH ? (
+                                    {atraso.pdf_path ? (
                                         <a 
-                                            href={`http://localhost:3000/SalidaPDF/${atraso.PDF_PATH}`} 
+                                            href={`http://localhost:3000/SalidaPDF/${atraso.pdf_path}`} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             download
