@@ -38,7 +38,13 @@ exports.fillForm = async (rutAlumno, fechaAtraso) => {
       form.flatten();
       const pdfBytes = await pdfDoc.save();
 
-      const pdfFileName = `../Plataforma_Atrasos/src/SalidaPDF/${datosAlumno.RUT_ALUMNO}.pdf`;
+      function generatePDFFileName() {
+        const date = new Date();
+        const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}-${date.getMinutes().toString().padStart(2, '0')}-${date.getSeconds().toString().padStart(2, '0')}`;
+        return `../Plataforma_Atrasos/src/SalidaPDF/${formattedDate}.pdf`;
+    }
+    
+      const pdfFileName = generatePDFFileName();
       fs.writeFile(pdfFileName, pdfBytes, (err) => {
         if (err) {
           return reject('Error al escribir el archivo PDF');

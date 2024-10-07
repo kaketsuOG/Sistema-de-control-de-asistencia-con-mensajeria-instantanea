@@ -82,13 +82,14 @@ exports.getAllAtrasos = (req, res) => {
 
 // Registrar un nuevo atraso
 exports.createAtraso = async (req, res) => {
-    const { rutAlumno, justificativo } = req.body;
+    const { rutAlumno, justificativo } = req.body; // Eliminamos CODATRASO del body
     const fechaAtrasos = new Date();
 
     if (!rutAlumno) {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
+    // Inserta el atraso sin el pdf_path
     const query = 'INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO) VALUES (?, ?, ?)';
 
     db.query(query, [rutAlumno, fechaAtrasos, justificativo], async (error, results) => {
@@ -96,11 +97,24 @@ exports.createAtraso = async (req, res) => {
             return res.status(500).json({ error: 'Error al insertar el atraso' });
         }
 
+        const codAtraso = results.insertId; // Obtenemos el ID del atraso recién creado
+
         try {
             // Genera el PDF
             const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
             console.log('Ruta del PDF generado:', pdfPath);
 
+            // Actualizar el campo pdf_path en la tabla atrasos con el ID recién creado
+            const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
+            db.query(updatePdfPathQuery, [pdfPath, codAtraso], (error, result) => {
+                if (error) {
+                    console.error('Error al actualizar la ruta del PDF en la base de datos:', error);
+                    return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });
+                }
+                console.log('Ruta del PDF actualizada correctamente en la base de datos.');
+            });
+
+            // Obtener el número de celular del apoderado
             const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
             db.query(getCelularQuery, [rutAlumno], async (error, results) => {
                 if (error) {
@@ -117,7 +131,7 @@ exports.createAtraso = async (req, res) => {
                     return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
                 }
 
-                res.status(201).json({ message: 'Atraso creado con éxito', id: results.insertId });
+                res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
             });
         } catch (pdfError) {
             console.error('Error al generar PDF:', pdfError);
@@ -125,6 +139,7 @@ exports.createAtraso = async (req, res) => {
         }
     });
 };
+
 
 // Actualizar un atraso existente
 exports.updateAtraso = (req, res) => {
