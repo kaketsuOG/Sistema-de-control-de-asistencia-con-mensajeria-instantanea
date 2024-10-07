@@ -9,11 +9,15 @@ import ReportsPage from './ReportsPage'; // Asegúrate de importar ReportsPage
 
 import logo from '../assets/images/logo.png'; // Importa la imagen del logo
 
+import AtrasosPage from './AtrasosPage';
+
 const HomePage = () => {
     const navigate = useNavigate();
     const [userName, setUserName] = useState('');
     const [showAttendance, setShowAttendance] = useState(false); // Estado para mostrar/ocultar AttendancePage
     const [showReports, setShowReports] = useState(false); // Estado para mostrar/ocultar ReportsPage
+    const [showAtrasos, setShowAtrasos] = useState(false);
+
 
     useEffect(() => {
         const storedUser = localStorage.getItem('userName');
@@ -29,19 +33,24 @@ const HomePage = () => {
         navigate('/login');
     };
 
-    const handleNavigation = (path) => {
-        navigate(path);
-    };
-
     const toggleAttendance = () => {
         setShowAttendance(!showAttendance); // Cambia el estado al hacer clic
         setShowReports(false); // Oculta los reportes
+        setShowAtrasos(false);
     };
 
     const toggleReports = () => {
         setShowReports(!showReports); // Cambia el estado al hacer clic
         setShowAttendance(false); // Oculta la asistencia
+        setShowAtrasos(false);
     };
+
+    const toggleAtraso = () => {
+        setShowAtrasos(!showAtrasos); // Cambia el estado para mostrar/ocultar AtrasosPage
+        setShowAttendance(false); // Oculta la asistencia
+        setShowReports(false); // Oculta los reportes
+    };
+    
 
     const styles = {
         homepageContainer: {
@@ -148,7 +157,7 @@ const HomePage = () => {
                         </li>
                         <li
                             style={styles.sidebarListItem}
-                            onClick={() => handleNavigation('/messaging')}
+                            onClick={toggleAtraso}
                         >
                             <img src={messageIcon} alt="Mensajería" style={styles.icon} />
                             Mensajería
@@ -174,7 +183,7 @@ const HomePage = () => {
                 {/* Main view */}
                 <div style={styles.contentArea}>
                     {/* Muestra el mensaje de bienvenida solo si showAttendance y showReports son false */}
-                    {!showAttendance && !showReports && (
+                    {!showAttendance && !showReports && !showAtrasos &&(
                         <>
                             <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
                             <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
@@ -186,6 +195,9 @@ const HomePage = () => {
                     
                     {/* Muestra ReportsPage si showReports es true */}
                     {showReports && <ReportsPage />}
+
+                    {/* Muestra AtrasosPage si showReports es true */}
+                    {showAtrasos && <AtrasosPage />}
                 </div>
             </div>
         </div>

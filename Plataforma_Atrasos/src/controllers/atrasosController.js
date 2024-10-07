@@ -64,7 +64,7 @@ const sendPDF = async (number, filePath) => {
 // Obtener todos los atrasos
 exports.getAllAtrasos = (req, res) => {
     const query = `
-        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
+        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, A.pdf_path,
                CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
                C.NOMBRE_CURSO
         FROM ATRASOS A

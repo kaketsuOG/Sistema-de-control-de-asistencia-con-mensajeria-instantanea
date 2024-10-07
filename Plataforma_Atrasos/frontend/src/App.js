@@ -5,6 +5,7 @@ import RegisterPage from './pages/RegisterPage';
 import AttendancePage from './pages/AttendancePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ReportsPage from './pages/ReportsPage';
+import AtrasosPage from './pages/AtrasosPage';
 
 function App() {
   return (
@@ -25,6 +26,10 @@ function App() {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
 
         <Route path="/reports" element={<ProtectedRoute><ReportsPage/></ProtectedRoute>} />
+
+        {/* Ruta protegida para la página de atrasos */}
+        <Route path="/atrasos" element={<AtrasosPage />} />
+
         
       </Routes>
     </Router>
