@@ -42,7 +42,7 @@ const AttendanceReportCustomRange = () => {
         setChartData([]); // Limpiar datos de la gráfica
 
         try {
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/atrasos/rango`, { // Asegúrate de que el puerto y la URL sean correctos
+            const response = await axios.get(`http://localhost:3000/api/atrasos/rango`, { // Asegúrate de que el puerto y la URL sean correctos
                 params: {
                     startDate,
                     endDate
