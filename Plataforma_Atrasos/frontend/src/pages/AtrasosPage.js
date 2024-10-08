@@ -9,7 +9,6 @@ const AtrasosPage = () => {
     // Estados para filtros de búsqueda
     const [searchRut, setSearchRut] = useState('');
     const [searchName, setSearchName] = useState('');
-    //const [searchDate, setSearchDate] = useState('');
 
     const fetchAtrasos = async () => {
         try {
@@ -30,8 +29,7 @@ const AtrasosPage = () => {
     const filteredAtrasos = atrasos.filter((atraso) => {
         const matchesRut = atraso.RUT_ALUMNO.toLowerCase().includes(searchRut.toLowerCase());
         const matchesName = atraso.NOMBRE_COMPLETO.toLowerCase().includes(searchName.toLowerCase());
-        //const matchesDate = searchDate ? new Date(atraso.FECHA_ATRASOS).toLocaleDateString() === searchDate : true;
-        return matchesRut && matchesName //&& //matchesDate;
+        return matchesRut && matchesName;
     });
 
     if (loading) {
@@ -66,62 +64,58 @@ const AtrasosPage = () => {
             {filteredAtrasos.length === 0 ? (
                 <p style={styles.noData}>No hay atrasos registrados.</p>
             ) : (
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.headerCell}>RUT Alumno</th>
-                            <th style={styles.headerCell}>Fecha Atraso</th>
-                            <th style={styles.headerCell}>Hora Atraso</th>
-                            <th style={styles.headerCell}>Justificativo</th>
-                            <th style={styles.headerCell}>Nombre Completo</th>
-                            <th style={styles.headerCell}>Curso</th>
-                            <th style={styles.headerCell}>PDF</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredAtrasos.map((atraso) => {
-                            const fecha = new Date(atraso.FECHA_ATRASOS);
-                            const fechaFormateada = fecha.toLocaleDateString();
-                            const horaFormateada = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Formato HH:MM
-                            console.log("aqui",atraso);
-                            
-                            return (
-                                
-                            <tr key={atraso.COD_ATRASOS} style={styles.row}>
-                                <td style={styles.cell}>{atraso.RUT_ALUMNO}</td>
-                                <td style={styles.cell}>{fechaFormateada}</td>
-                                <td style={styles.cell}>{horaFormateada}</td>
-                                <td style={styles.cell}>{atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
-                                <td style={styles.cell}>{atraso.NOMBRE_COMPLETO}</td>
-                                <td style={styles.cell}>{atraso.NOMBRE_CURSO}</td>
-                                <td style={styles.cell}>
-                                    {atraso.pdf_path ? (
-                                        <a 
-                                            href={`http://localhost:3000/SalidaPDF/${atraso.pdf_path}`} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            download
-                                            style={styles.pdfLink}
-                                        >
-                                            📥 Descargar PDF
-                                        </a>
-                                    ) : (
-                                        'No disponible'
-                                    )}
-                                </td>
-
+                <div style={styles.tableContainer}> {/* Contenedor para scrollbar */}
+                    <table style={styles.table}>
+                        <thead>
+                            <tr>
+                                <th style={styles.headerCell}>RUT Alumno</th>
+                                <th style={styles.headerCell}>Fecha Atraso</th>
+                                <th style={styles.headerCell}>Hora Atraso</th>
+                                <th style={styles.headerCell}>Justificativo</th>
+                                <th style={styles.headerCell}>Nombre Completo</th>
+                                <th style={styles.headerCell}>Curso</th>
+                                <th style={styles.headerCell}>PDF</th>
                             </tr>
-                            
-                            );
-                        })}
-                        
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredAtrasos.map((atraso) => {
+                                const fecha = new Date(atraso.FECHA_ATRASOS);
+                                const fechaFormateada = fecha.toLocaleDateString();
+                                const horaFormateada = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                                return (
+                                    <tr key={atraso.COD_ATRASOS} style={styles.row}>
+                                        <td style={styles.cell}>{atraso.RUT_ALUMNO}</td>
+                                        <td style={styles.cell}>{fechaFormateada}</td>
+                                        <td style={styles.cell}>{horaFormateada}</td>
+                                        <td style={styles.cell}>{atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
+                                        <td style={styles.cell}>{atraso.NOMBRE_COMPLETO}</td>
+                                        <td style={styles.cell}>{atraso.NOMBRE_CURSO}</td>
+                                        <td style={styles.cell}>
+                                            {atraso.pdf_path ? (
+                                                <a 
+                                                    href={`http://localhost:3000/SalidaPDF/${atraso.pdf_path}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    download
+                                                    style={styles.pdfLink}
+                                                >
+                                                    📥 Descargar PDF
+                                                </a>
+                                            ) : (
+                                                'No disponible'
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );
 };
-
 
 const styles = {
     container: {
@@ -148,10 +142,14 @@ const styles = {
         borderRadius: '4px',
         border: '1px solid #ccc',
     },
+    tableContainer: {
+        maxHeight: '400px', // Define la altura máxima del contenedor para la scrollbar
+        overflowY: 'auto', // Agrega la scrollbar vertical
+        marginTop: '20px',
+    },
     table: {
         width: '100%',
         borderCollapse: 'collapse',
-        marginTop: '20px',
     },
     headerCell: {
         backgroundColor: '#007bff',
