@@ -41,26 +41,18 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             const response = await method(url, { rutAlumno, fechaAtrasos, justificativo: residenciaJustificativo ? 1 : 0 });
 
             if (response.status >= 200 && response.status < 300) {
-
-                // Mostrar la notificación
                 setSuccessMessage('Atraso registrado y PDF generado con éxito.');
                 setNotificationVisible(true);
 
-                if (onSuccess) {
-                    onSuccess(); // Actualiza la lista si es necesario
-                }
-
-                resetForm(); // Limpia el formulario después de un registro exitoso
+                if (onSuccess) onSuccess();
+                resetForm();
             } else {
                 setError('Error en la solicitud. Código de estado: ' + response.status);
             }
         } catch (err) {
-            console.error('Error al guardar el atraso', err);
             setError('Error al guardar el atraso: ' + err.message);
         }
     };
-
-    
 
     const checkJustificativoResidencia = async () => {
         try {
@@ -73,57 +65,74 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             setResidenciaJustificativo(false);
             setMostrarJustificativo(false);
             setError('Error al verificar justificativo de residencia');
-            console.error('Error en la verificación:', err);
         }
     };
 
-    // Efecto para manejar la visibilidad de la notificación
     useEffect(() => {
         if (notificationVisible) {
-            const timer = setTimeout(() => {
-                setNotificationVisible(false);
-            }, 3000);
+            const timer = setTimeout(() => setNotificationVisible(false), 3000);
             return () => clearTimeout(timer);
         }
     }, [notificationVisible]);
 
-    // Estilos en línea
     const styles = {
         container: {
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
             maxWidth: '500px',
-            margin: '20px auto',
-            padding: '20px',
-            border: '1px solid #ccc',
+            margin: '40px auto',
+            padding: '30px',
             borderRadius: '8px',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-            backgroundColor: '#f9f9f9',
+            backgroundColor: '#ffffff',
         },
         title: {
             textAlign: 'center',
             marginBottom: '20px',
+            fontSize: '24px',
+            color: '#333',
+        },
+        form: {
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
         },
         label: {
-            marginBottom: '10px',
+            width: '100%',
+            marginBottom: '8px',
             fontWeight: 'bold',
+            color: '#555',
+        },
+        inputContainer: {
+            display: 'flex',
+            width: '100%',
+            marginBottom: '20px',
+            gap: '10px',
         },
         input: {
+            flex: '1',
             padding: '10px',
-            marginBottom: '20px',
-            border: '1px solid #ccc',
             borderRadius: '4px',
-            width: '100%',
+            border: '1px solid #ddd',
         },
         button: {
-            padding: '10px',
-            backgroundColor: '#007bff', // Azul
+            padding: '10px 15px',
+            backgroundColor: '#007bff',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            width: '100%',
-            marginBottom: '10px',
+            fontWeight: 'bold',
+        },
+        dateInput: {
+            width: '95%',
+            padding: '10px',
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+            marginBottom: '20px',
         },
         error: {
             color: '#dc3545',
@@ -137,14 +146,9 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         },
         justificativoText: {
             textAlign: 'center',
-            marginBottom: '15px',
             fontWeight: 'bold',
             color: '#007bff',
-        },
-        inputContainer: {
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '20px',
+            marginBottom: '15px',
         },
         notification: {
             position: 'fixed',
@@ -163,22 +167,23 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
 
     return (
         <div style={styles.container}>
-            <h2 style={styles.title}>{currentData ? 'Editar Atraso' : 'Agregar Atraso'}</h2>
+            <h2 style={styles.title}>{currentData ? 'Editar Atraso' : 'Registrar Atraso'}</h2>
             {error && <p style={styles.error}>{error}</p>}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} style={styles.form}>
+                <label style={styles.label}>RUT Alumno</label>
                 <div style={styles.inputContainer}>
-                    <label style={styles.label}>RUT Alumno</label>
                     <input
                         type="text"
                         value={rutAlumno}
                         onChange={(e) => setRutAlumno(e.target.value)}
+                        placeholder="Ingrese RUT"
                         required
                         style={styles.input}
                     />
                     <button 
                         type="button" 
                         onClick={checkJustificativoResidencia} 
-                        style={{ ...styles.button, marginLeft: '10px', width: 'auto' }}
+                        style={styles.button}
                     >
                         Verificar
                     </button>
@@ -188,22 +193,18 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                         {residenciaJustificativo ? 'Presenta Justificativo' : 'No Presenta Justificativo'}
                     </p>
                 )}
-                <div>
-                    <label style={styles.label}>Fecha del Atraso</label>
-                    <input
-                        type="date"
-                        value={fechaAtrasos}
-                        onChange={(e) => setFechaAtraso(e.target.value)}
-                        required
-                        style={styles.input}
-                    />
-                </div>
-                <button type="submit" style={styles.button}>
+                <label style={styles.label}>Fecha del Atraso</label>
+                <input
+                    type="date"
+                    value={fechaAtrasos}
+                    onChange={(e) => setFechaAtraso(e.target.value)}
+                    required
+                    style={styles.dateInput}
+                />
+                <button type="submit" style={{ ...styles.button, width: '100%' }}>
                     {currentData ? 'Actualizar' : 'Guardar'}
                 </button>
             </form>
-
-            {/* Notificación emergente */}
             {notificationVisible && <div style={styles.notification}>{successMessage}</div>}
         </div>
     );

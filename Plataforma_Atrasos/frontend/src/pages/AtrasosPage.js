@@ -128,8 +128,8 @@ const styles = {
     },
     title: {
         textAlign: 'center',
-        color: '#007bff',
-        marginBottom: '20px',
+        color: 'black',
+        marginBottom: '15px',
     },
     filters: {
         display: 'flex',
