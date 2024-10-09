@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
+import agregarIcon from '../assets/icons/agregar-usuario.png';
 import AttendancePage from './AttendancePage'; // Asegúrate de que la ruta sea correcta
 import ReportsPage from './ReportsPage'; // Asegúrate de importar ReportsPage
 
 import logo from '../assets/images/logo.png'; // Importa la imagen del logo
 
 import AtrasosPage from './AtrasosPage';
+import RegisterPage from './RegisterPage';
 import axios from 'axios';
 
 const HomePage = () => {
@@ -18,6 +20,7 @@ const HomePage = () => {
     const [showAttendance, setShowAttendance] = useState(false); // Estado para mostrar/ocultar AttendancePage
     const [showReports, setShowReports] = useState(false); // Estado para mostrar/ocultar ReportsPage
     const [showAtrasos, setShowAtrasos] = useState(false);
+    const [showRegistro, setShowRegistro] = useState(false);
 
 
     useEffect(() => {
@@ -51,18 +54,30 @@ const HomePage = () => {
         setShowAttendance(!showAttendance); // Cambia el estado al hacer clic
         setShowReports(false); // Oculta los reportes
         setShowAtrasos(false);
+        setShowRegistro(false);
     };
 
     const toggleReports = () => {
         setShowReports(!showReports); // Cambia el estado al hacer clic
         setShowAttendance(false); // Oculta la asistencia
         setShowAtrasos(false);
+        setShowRegistro(false);
+
     };
 
     const toggleAtraso = () => {
         setShowAtrasos(!showAtrasos); // Cambia el estado para mostrar/ocultar AtrasosPage
         setShowAttendance(false); // Oculta la asistencia
         setShowReports(false); // Oculta los reportes
+        setShowRegistro(false);
+
+    };
+
+    const toggleRegistro = () => {
+        setShowRegistro(!showRegistro); // Cambia el estado para mostrar/ocultar AtrasosPage
+        setShowAttendance(false); // Oculta la asistencia
+        setShowReports(false); // Oculta los reportes
+        setShowAtrasos(false);
     };
     
 
@@ -106,6 +121,7 @@ const HomePage = () => {
             width: '30px',
             height: '30px',
             marginRight: '10px',
+            color: 'white',
         },
         mainContent: {
             flexGrow: '1',
@@ -176,6 +192,13 @@ const HomePage = () => {
                             <img src={messageIcon} alt="Mensajería" style={styles.icon} />
                             Mensajería
                         </li>
+                        <li
+                            style={styles.sidebarListItem}
+                            onClick={toggleRegistro}
+                        >
+                            <img src={agregarIcon} alt="Agregar" style={styles.icon} />
+                            Registrar Usuario
+                        </li>
                     </ul>
                 </div>
 
@@ -197,7 +220,7 @@ const HomePage = () => {
                 {/* Main view */}
                 <div style={styles.contentArea}>
                     {/* Muestra el mensaje de bienvenida solo si showAttendance y showReports son false */}
-                    {!showAttendance && !showReports && !showAtrasos &&(
+                    {!showAttendance && !showReports && !showAtrasos && !showRegistro &&(
                         <>
                             <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
                             <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
@@ -212,6 +235,12 @@ const HomePage = () => {
 
                     {/* Muestra AtrasosPage si showReports es true */}
                     {showAtrasos && <AtrasosPage />}
+
+                    {/* Muestra AtrasosPage si showReports es true */}
+                    {showRegistro && <RegisterPage />}
+                    
+                    
+                
                 </div>
             </div>
         </div>

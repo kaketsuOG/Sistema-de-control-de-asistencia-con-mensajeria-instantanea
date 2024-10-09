@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { login } from '../services/authService';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -12,7 +11,7 @@ const LoginPage = () => {
         e.preventDefault();
 
         try {
-            const user = await login(rutUsername, contraseña);
+            //const user = await login(rutUsername, contraseña);
             localStorage.setItem('RUT_USERNAME', rutUsername); // Guardar el RUT en localStorage
             window.location.href = '/home';
         } catch (err) {

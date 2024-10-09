@@ -93,7 +93,7 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh',
+        height: '60vh',
         backgroundColor: '#f7f7f7',
     },
     card: {
