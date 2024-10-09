@@ -7,7 +7,7 @@ const RegisterPage = () => {
     const [rutUsername, setRutUsername] = useState('');
     const [contraseña, setContraseña] = useState('');
     const [confirmarContraseña, setConfirmarContraseña] = useState('');
-    const [codRol, setCodRol] = useState('');
+    //const [codRol, setCodRol] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
@@ -20,7 +20,7 @@ const RegisterPage = () => {
         }
 
         try {
-            await register({ nombreUsuario, rutUsername, contraseña, codRol });
+            await register({ nombreUsuario, rutUsername, contraseña }); // se puede añadir codRol
             console.log('Registro exitoso');
             // Aquí podrías redirigir al usuario al login o a otra página
             navigate('/login');
@@ -71,7 +71,7 @@ const RegisterPage = () => {
                             style={styles.input}
                         />
                     </div>
-                    <div style={styles.formGroup}>
+                    {/* <div style={styles.formGroup}>
                         <label>Código de Rol</label>
                         <input
                             type="number"
@@ -79,7 +79,7 @@ const RegisterPage = () => {
                             onChange={(e) => setCodRol(e.target.value)}
                             style={styles.input}
                         />
-                    </div>
+                    </div> */}
                     <button type="submit" style={styles.button}>Registrar</button>
                 </form>
             </div>

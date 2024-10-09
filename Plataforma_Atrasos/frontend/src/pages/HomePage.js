@@ -10,6 +10,7 @@ import ReportsPage from './ReportsPage'; // Asegúrate de importar ReportsPage
 import logo from '../assets/images/logo.png'; // Importa la imagen del logo
 
 import AtrasosPage from './AtrasosPage';
+import axios from 'axios';
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -20,13 +21,26 @@ const HomePage = () => {
 
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('userName');
-        if (storedUser) {
-            setUserName(storedUser);
-        } else {
-            setUserName('No te encontré');
-        }
+        const fetchUserName = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const rutUsername = localStorage.getItem('RUT_USERNAME'); // Almacena RUT_USERNAME en el login
+                const response = await axios.get(`http://localhost:3000/auth/username/${rutUsername}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                setUserName(response.data?.NOMBRE_USUARIO || 'No te encontré');
+            } catch (error) {
+                console.error("Error al obtener el nombre de usuario:", error);
+                setUserName('No te encontré');
+            }
+        };
+        fetchUserName();
     }, []);
+    
+    
+    console.log(userName)
 
     const handleLogout = () => {
         localStorage.removeItem('token');

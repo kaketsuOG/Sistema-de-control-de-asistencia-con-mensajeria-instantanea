@@ -1,7 +1,6 @@
-// src/pages/LoginPage.js
 import React, { useState } from 'react';
 import { login } from '../services/authService';
-import './LoginPage.css'; // Asegúrate de crear este archivo para los estilos
+import './LoginPage.css';
 
 const LoginPage = () => {
     const [rutUsername, setRutUsername] = useState('');
@@ -13,11 +12,11 @@ const LoginPage = () => {
         e.preventDefault();
 
         try {
-            await login(rutUsername, contraseña);
-            // Redirigir a la página de inicio después del login exitoso
+            const user = await login(rutUsername, contraseña);
+            localStorage.setItem('RUT_USERNAME', rutUsername); // Guardar el RUT en localStorage
             window.location.href = '/home';
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || "Error al iniciar sesión. Inténtalo de nuevo.");
         }
     };
 
@@ -27,15 +26,15 @@ const LoginPage = () => {
             justifyContent: 'center',
             alignItems: 'center',
             height: '100vh',
-            backgroundColor: '#f4f4f9' // Color de fondo
+            backgroundColor: '#f4f4f9'
         }}>
             <div style={{
-                width: '400px', // Ajuste del ancho para expandir la tarjeta
-                padding: '30px', // Más padding para que los elementos no estén pegados al borde
+                width: '400px',
+                padding: '30px',
                 border: '1px solid #ccc',
                 borderRadius: '10px',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                backgroundColor: 'white' // Fondo blanco para la tarjeta
+                backgroundColor: 'white'
             }}>
                 <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Inicio de Sesión</h2>
                 {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
@@ -53,6 +52,7 @@ const LoginPage = () => {
                                 border: '1px solid #ccc',
                                 fontSize: '16px'
                             }}
+                            aria-label="Ingrese su RUT"
                         />
                     </div>
                     <div style={{ marginBottom: '20px', position: 'relative' }}>
@@ -68,17 +68,19 @@ const LoginPage = () => {
                                 border: '1px solid #ccc',
                                 fontSize: '16px'
                             }}
+                            aria-label="Ingrese su contraseña"
                         />
                         <span
                             onClick={() => setShowPassword(!showPassword)}
                             style={{
                                 position: 'absolute',
                                 right: '10px',
-                                top: '45px', // Ajuste para mejor alineación vertical
+                                top: '45px',
                                 transform: 'translateY(-50%)',
                                 cursor: 'pointer',
                                 fontSize: '18px'
                             }}
+                            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                         >
                             {showPassword ? '🙈' : '👁️'}
                         </span>
@@ -99,9 +101,6 @@ const LoginPage = () => {
                         Iniciar Sesión
                     </button>
                 </form>
-                <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                    <a href="/register" style={{ fontSize: '14px' }}>Registrarme</a>
-                </div>
             </div>
         </div>
     );

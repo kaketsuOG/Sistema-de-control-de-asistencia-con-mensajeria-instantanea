@@ -20,7 +20,7 @@ exports.login = (req, res) => {
                 return res.status(400).json({ message: 'Contraseña incorrecta' });
             }
 
-            const token = jwt.sign({ id: user.COD_USUARIO }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ id: user.RUT_USERNAME }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
             res.json({ token });
         });
@@ -49,10 +49,10 @@ exports.getAllUsers = (req, res) => {
     });
 };
 
-exports.getUsersByRole = (req, res) => {
-    const { codRol } = req.params;
+exports.getUsersByRut = (req, res) => {
+    const { rutUsername } = req.params;
 
-    db.query('SELECT * FROM USUARIOS WHERE COD_ROL = ?', [codRol], (err, results) => {
+    db.query('SELECT * FROM USUARIOS WHERE RUT_USERNAME = ?', [rutUsername], (err, results) => {
         if (err) return res.status(500).json({ message: 'Error en la base de datos' });
 
         res.json(results);
@@ -66,5 +66,19 @@ exports.deleteUser = (req, res) => {
         if (err) return res.status(500).json({ message: 'Error al eliminar el usuario' });
 
         res.json({ message: 'Usuario eliminado correctamente' });
+    });
+};
+
+exports.getUserNameByRUT = (req, res) => {
+    const { rutUsername } = req.params;
+
+    db.query('SELECT NOMBRE_USUARIO FROM USUARIOS WHERE RUT_USERNAME = ?', [rutUsername], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error en la base de datos' });
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        res.json(results[0]);
     });
 };
