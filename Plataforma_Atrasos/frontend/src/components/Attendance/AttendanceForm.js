@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const AttendanceForm = ({ onSuccess, currentData }) => {
     const [rutAlumno, setRutAlumno] = useState(currentData?.rutAlumno || '');
+    const [nombreAlumno, setNombreAlumno] = useState(''); // Añadir estado para nombre del alumno
     const [fechaAtrasos, setFechaAtraso] = useState(currentData?.fechaAtrasos || '');
     const [residenciaJustificativo, setResidenciaJustificativo] = useState(false);
     const [mostrarJustificativo, setMostrarJustificativo] = useState(false);
@@ -57,8 +58,10 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
     const checkJustificativoResidencia = async () => {
         try {
             const response = await axios.get(`http://localhost:3000/api/alumnos/${rutAlumno}/residencia`);
+            console.log(response.data); // Verifica el contenido de la respuesta
             const tieneJustificativo = response.data.justificativo_residencia === 1;
             setResidenciaJustificativo(tieneJustificativo);
+            setNombreAlumno(response.data.NOMBRE_ALUMNO || ''); // Extrae el nombre del alumno
             setMostrarJustificativo(true);
             setError('');
         } catch (err) {
@@ -190,7 +193,7 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                 </div>
                 {mostrarJustificativo && (
                     <p style={styles.justificativoText}>
-                        {residenciaJustificativo ? 'Presenta Justificativo' : 'No Presenta Justificativo'}
+                        {nombreAlumno ? `${nombreAlumno} ` : ''}{residenciaJustificativo ? 'presenta justificativo.' : 'no presenta justificativo.'}
                     </p>
                 )}
                 <label style={styles.label}>Fecha del Atraso</label>
