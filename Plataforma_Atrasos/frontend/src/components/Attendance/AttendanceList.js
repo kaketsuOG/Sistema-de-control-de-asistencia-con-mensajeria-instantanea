@@ -158,7 +158,7 @@ const AttendanceList = ({ updated }) => {
                                 <strong>Nombre:</strong> {atraso.NOMBRE_COMPLETO} <br />
                                 <strong>Curso:</strong> {atraso.NOMBRE_CURSO} <br />
                                 <strong>Fecha:</strong> {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')} <br />
-                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? 'Sí' : 'No'}
+                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? 'Sí ' : 'No'}
                             </div>
                         </li>
                     ))}

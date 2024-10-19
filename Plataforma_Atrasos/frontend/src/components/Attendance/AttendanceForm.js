@@ -6,6 +6,8 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
     const [nombreAlumno, setNombreAlumno] = useState(''); // Añadir estado para nombre del alumno
     const [fechaAtrasos, setFechaAtraso] = useState(currentData?.fechaAtrasos || '');
     const [residenciaJustificativo, setResidenciaJustificativo] = useState(false);
+    const [medicoJustificativo, setMedicoJustificativo] = useState(false); // Justificativo médico
+    const [deportivoJustificativo, setDeportivoJustificativo] = useState(false); // Justificativo deportivo
     const [mostrarJustificativo, setMostrarJustificativo] = useState(false);
     const [error, setError] = useState('');
     const [notificationVisible, setNotificationVisible] = useState(false);
@@ -18,6 +20,8 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             setRutAlumno(currentData.rutAlumno);
             setFechaAtraso(currentData.fechaAtrasos);
             setResidenciaJustificativo(false);
+            setMedicoJustificativo(false);
+            setDeportivoJustificativo(false);
             setMostrarJustificativo(false);
             setError('');
         }
@@ -27,6 +31,8 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         setRutAlumno('');
         setFechaAtraso('');
         setResidenciaJustificativo(false);
+        setMedicoJustificativo(false);
+        setDeportivoJustificativo(false);
         setMostrarJustificativo(false);
         setError('');
     };
@@ -55,19 +61,26 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         }
     };
 
-    const checkJustificativoResidencia = async () => {
+    const checkJustificativos = async () => {
         try {
             const response = await axios.get(`http://localhost:3000/api/alumnos/${rutAlumno}/residencia`);
-            console.log(response.data); // Verifica el contenido de la respuesta
-            const tieneJustificativo = response.data.justificativo_residencia === 1;
-            setResidenciaJustificativo(tieneJustificativo);
+            
+            const tieneResidencia = response.data.justificativo_residencia === 1;
+            const tieneMedico = response.data.justificativo_medico === 1;
+            const tieneDeportivo = response.data.justificativo_deportivo === 1;
+
+            setResidenciaJustificativo(tieneResidencia);
+            setMedicoJustificativo(tieneMedico);
+            setDeportivoJustificativo(tieneDeportivo);
             setNombreAlumno(response.data.NOMBRE_ALUMNO || ''); // Extrae el nombre del alumno
             setMostrarJustificativo(true);
             setError('');
         } catch (err) {
             setResidenciaJustificativo(false);
+            setMedicoJustificativo(false);
+            setDeportivoJustificativo(false);
             setMostrarJustificativo(false);
-            setError('Error al verificar justificativo de residencia');
+            setError('Error al verificar justificativos');
         }
     };
 
@@ -185,7 +198,7 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                     />
                     <button 
                         type="button" 
-                        onClick={checkJustificativoResidencia} 
+                        onClick={checkJustificativos} 
                         style={styles.button}
                     >
                         Verificar
@@ -193,7 +206,11 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                 </div>
                 {mostrarJustificativo && (
                     <p style={styles.justificativoText}>
-                        {nombreAlumno ? `${nombreAlumno} ` : ''}{residenciaJustificativo ? 'presenta justificativo.' : 'no presenta justificativo.'}
+                        {nombreAlumno ? `${nombreAlumno} ` : ''} 
+                        {residenciaJustificativo && 'presenta justificativo de residencia.'}
+                        {medicoJustificativo && 'presenta justificativo médico.'}
+                        {deportivoJustificativo && 'presenta justificativo deportivo.'}
+                        {!residenciaJustificativo && !medicoJustificativo && !deportivoJustificativo && 'no presenta justificativos.'}
                     </p>
                 )}
                 <label style={styles.label}>Fecha del Atraso</label>

@@ -4,6 +4,6 @@ const justificativosController = require('../controllers/justificativosControlle
 
 
 // Ruta para verificar justificativo de residencia
-router.get('/alumnos/:rut/residencia', justificativosController.verificarJustificativoResidencia);
+router.get('/alumnos/:rut/residencia', justificativosController.verificarJustificativos);
 
 module.exports = router;
