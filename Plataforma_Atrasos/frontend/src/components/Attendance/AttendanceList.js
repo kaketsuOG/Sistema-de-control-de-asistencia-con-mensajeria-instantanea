@@ -29,19 +29,22 @@ const AttendanceList = ({ updated }) => {
     }, [updated]); // Actualiza la lista cuando 'updated' cambie
 
     // Filtrar atrasos cuando cambian los filtros de búsqueda
-    useEffect(() => {
-        const filtered = atrasos.filter(atraso => {
-            const matchesNombre = atraso.NOMBRE_COMPLETO.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCurso = searchCurso === '' || atraso.NOMBRE_CURSO.toLowerCase().includes(searchCurso.toLowerCase());
-            const matchesFecha = searchFecha === '' || format(new Date(atraso.FECHA_ATRASOS), 'yyyy-MM-dd') === searchFecha;
-            const matchesJustificativo = searchJustificativo === '' || 
-                (searchJustificativo === 'Sí' && atraso.JUSTIFICATIVO) ||
-                (searchJustificativo === 'No' && !atraso.JUSTIFICATIVO);
-            
-            return matchesNombre && matchesCurso && matchesFecha && matchesJustificativo;
-        });
-        setFilteredAtrasos(filtered);
-    }, [searchTerm, searchCurso, searchFecha, searchJustificativo, atrasos]);
+useEffect(() => {
+    const filtered = atrasos.filter(atraso => {
+        const nombreCompleto = atraso.NOMBRE_COMPLETO || ''; // Asigna una cadena vacía si es null
+        const matchesNombre = nombreCompleto.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesCurso = searchCurso === '' || (atraso.NOMBRE_CURSO && atraso.NOMBRE_CURSO.toLowerCase().includes(searchCurso.toLowerCase()));
+        const matchesFecha = searchFecha === '' || format(new Date(atraso.FECHA_ATRASOS), 'yyyy-MM-dd') === searchFecha;
+        const matchesJustificativo = searchJustificativo === '' || 
+            (searchJustificativo === 'Sí' && atraso.JUSTIFICATIVO) ||
+            (searchJustificativo === 'No' && !atraso.JUSTIFICATIVO);
+        
+        return matchesNombre && matchesCurso && matchesFecha && matchesJustificativo;
+    });
+    setFilteredAtrasos(filtered);
+}, [searchTerm, searchCurso, searchFecha, searchJustificativo, atrasos]);
+
 
     // Estilos
     const styles = {
@@ -158,7 +161,9 @@ const AttendanceList = ({ updated }) => {
                                 <strong>Nombre:</strong> {atraso.NOMBRE_COMPLETO} <br />
                                 <strong>Curso:</strong> {atraso.NOMBRE_CURSO} <br />
                                 <strong>Fecha:</strong> {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')} <br />
-                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? 'Sí ' : 'No'}
+                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? `${atraso.TIPO_JUSTIFICATIVO}` : 'No'}
+
+
                             </div>
                         </li>
                     ))}
