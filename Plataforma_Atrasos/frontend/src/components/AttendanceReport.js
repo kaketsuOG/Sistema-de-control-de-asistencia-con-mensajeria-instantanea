@@ -147,7 +147,9 @@ const AttendanceReport = () => {
                                         <td style={styles.td}>{reporte.RUT_ALUMNO}</td>
                                         <td style={styles.td}>{reporte.NOMBRE_COMPLETO || 'No disponible'}</td>
                                         <td style={styles.td}>{reporte.NOMBRE_CURSO || 'No disponible'}</td>
-                                        <td style={styles.td}>{reporte.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
+                                        <td style={styles.td}>
+                                            {reporte.TIPO_JUSTIFICATIVO !== 'Sin justificativo' ? reporte.TIPO_JUSTIFICATIVO : 'No'}
+                                        </td>
                                         <td style={styles.td}>{new Date(reporte.FECHA_ATRASOS).toLocaleDateString()}</td>
                                     </tr>
                                 ))}

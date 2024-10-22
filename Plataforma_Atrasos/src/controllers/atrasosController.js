@@ -228,15 +228,15 @@ exports.getAtrasosDelDia = (req, res) => {
     const inicioDelDia = new Date(`${fecha}T00:00:00`);
     const finDelDia = new Date(`${fecha}T23:59:59`);
 
-    // Corrige el nombre de la tabla aquí
+    // Incluir TIPO_JUSTIFICATIVO en la consulta
     const query = `
-        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
+        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, A.TIPO_JUSTIFICATIVO, 
                CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
                C.NOMBRE_CURSO
         FROM ATRASOS A
         JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
         JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
-        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?
+        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?;
     `;
 
     db.query(query, [inicioDelDia, finDelDia], (error, results) => {
@@ -247,6 +247,8 @@ exports.getAtrasosDelDia = (req, res) => {
         res.json(results);
     });
 };
+
+
 // *** Nueva Funcionalidad: Obtener atrasos semanales (de lunes a viernes) ***
 exports.getAtrasosRango = (req, res) => {
     const { startDate, endDate } = req.query;
