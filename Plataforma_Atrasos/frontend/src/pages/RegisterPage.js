@@ -7,23 +7,28 @@ const RegisterPage = () => {
     const [rutUsername, setRutUsername] = useState('');
     const [contraseña, setContraseña] = useState('');
     const [confirmarContraseña, setConfirmarContraseña] = useState('');
-    //const [codRol, setCodRol] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validar que todos los campos estén rellenados
+        if (!nombreUsuario || !rutUsername || !contraseña || !confirmarContraseña) {
+            setError('Por favor, rellena todos los campos');
+            return;
+        }
+
+        // Validar que las contraseñas coincidan
         if (contraseña !== confirmarContraseña) {
             setError('Las contraseñas no coinciden');
             return;
         }
 
         try {
-            await register({ nombreUsuario, rutUsername, contraseña }); // se puede añadir codRol
+            await register({ nombreUsuario, rutUsername, contraseña });
             console.log('Registro exitoso');
-            // Aquí podrías redirigir al usuario al login o a otra página
-            navigate('/login');
+            navigate('/home');
         } catch (err) {
             setError(err.message);
         }
@@ -71,15 +76,6 @@ const RegisterPage = () => {
                             style={styles.input}
                         />
                     </div>
-                    {/* <div style={styles.formGroup}>
-                        <label>Código de Rol</label>
-                        <input
-                            type="number"
-                            value={codRol}
-                            onChange={(e) => setCodRol(e.target.value)}
-                            style={styles.input}
-                        />
-                    </div> */}
                     <button type="submit" style={styles.button}>Registrar</button>
                 </form>
             </div>

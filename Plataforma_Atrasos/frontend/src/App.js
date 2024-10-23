@@ -18,7 +18,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Página de registro */}
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={<ProtectedRoute><RegisterPage /></ProtectedRoute>} />
 
         <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
 

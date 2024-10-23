@@ -153,25 +153,32 @@ exports.createAtraso = async (req, res) => {
                     console.log('Ruta del PDF actualizada correctamente en la base de datos.');
                 });
 
-                // Obtener el número de celular del apoderado
-                const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-                db.query(getCelularQuery, [rutAlumno], async (error, results) => {
-                    if (error) {
-                        console.error('Error al obtener el número de celular del apoderado:', error);
-                        return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
-                    }
+                // Solo se enviará el mensaje si justificativoValue es 0 (sin justificativo)
+                if (justificativoValue === 0) {
+                    // Obtener el número de celular del apoderado
+                    const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+                    db.query(getCelularQuery, [rutAlumno], async (error, results) => {
+                        if (error) {
+                            console.error('Error al obtener el número de celular del apoderado:', error);
+                            return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
+                        }
 
-                    const celularApoderado = results[0]?.N_CELULAR_APODERADO;
-                    if (celularApoderado) {
-                        // Enviar solo el PDF por WhatsApp
-                        await sendPDF(celularApoderado, pdfPath);
-                    } else {
-                        console.error('Error: No se encontró el número de celular del apoderado.');
-                        return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
-                    }
+                        const celularApoderado = results[0]?.N_CELULAR_APODERADO;
+                        if (celularApoderado) {
+                            // Enviar solo el PDF por WhatsApp
+                            await sendPDF(celularApoderado, pdfPath);
+                        } else {
+                            console.error('Error: No se encontró el número de celular del apoderado.');
+                            return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
+                        }
 
-                    res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
-                });
+                        res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
+                    });
+                } else {
+                    console.log('El alumno tiene un justificativo, no se enviará el mensaje.');
+                    res.status(201).json({ message: 'Atraso creado con éxito, pero no se envió mensaje por justificativo', id: codAtraso });
+                }
+
             } catch (pdfError) {
                 console.error('Error al generar PDF:', pdfError);
                 res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
@@ -228,15 +235,15 @@ exports.getAtrasosDelDia = (req, res) => {
     const inicioDelDia = new Date(`${fecha}T00:00:00`);
     const finDelDia = new Date(`${fecha}T23:59:59`);
 
-    // Corrige el nombre de la tabla aquí
+    // Incluir TIPO_JUSTIFICATIVO en la consulta
     const query = `
-        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, 
+        SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, A.TIPO_JUSTIFICATIVO, 
                CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
                C.NOMBRE_CURSO
         FROM ATRASOS A
         JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
         JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
-        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?
+        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?;
     `;
 
     db.query(query, [inicioDelDia, finDelDia], (error, results) => {
@@ -247,6 +254,8 @@ exports.getAtrasosDelDia = (req, res) => {
         res.json(results);
     });
 };
+
+
 // *** Nueva Funcionalidad: Obtener atrasos semanales (de lunes a viernes) ***
 exports.getAtrasosRango = (req, res) => {
     const { startDate, endDate } = req.query;
