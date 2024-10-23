@@ -153,25 +153,32 @@ exports.createAtraso = async (req, res) => {
                     console.log('Ruta del PDF actualizada correctamente en la base de datos.');
                 });
 
-                // Obtener el número de celular del apoderado
-                const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-                db.query(getCelularQuery, [rutAlumno], async (error, results) => {
-                    if (error) {
-                        console.error('Error al obtener el número de celular del apoderado:', error);
-                        return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
-                    }
+                // Solo se enviará el mensaje si justificativoValue es 0 (sin justificativo)
+                if (justificativoValue === 0) {
+                    // Obtener el número de celular del apoderado
+                    const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+                    db.query(getCelularQuery, [rutAlumno], async (error, results) => {
+                        if (error) {
+                            console.error('Error al obtener el número de celular del apoderado:', error);
+                            return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
+                        }
 
-                    const celularApoderado = results[0]?.N_CELULAR_APODERADO;
-                    if (celularApoderado) {
-                        // Enviar solo el PDF por WhatsApp
-                        await sendPDF(celularApoderado, pdfPath);
-                    } else {
-                        console.error('Error: No se encontró el número de celular del apoderado.');
-                        return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
-                    }
+                        const celularApoderado = results[0]?.N_CELULAR_APODERADO;
+                        if (celularApoderado) {
+                            // Enviar solo el PDF por WhatsApp
+                            await sendPDF(celularApoderado, pdfPath);
+                        } else {
+                            console.error('Error: No se encontró el número de celular del apoderado.');
+                            return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
+                        }
 
-                    res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
-                });
+                        res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
+                    });
+                } else {
+                    console.log('El alumno tiene un justificativo, no se enviará el mensaje.');
+                    res.status(201).json({ message: 'Atraso creado con éxito, pero no se envió mensaje por justificativo', id: codAtraso });
+                }
+
             } catch (pdfError) {
                 console.error('Error al generar PDF:', pdfError);
                 res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
