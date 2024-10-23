@@ -22,7 +22,6 @@ const HomePage = () => {
     const [showAtrasos, setShowAtrasos] = useState(false);
     const [showRegistro, setShowRegistro] = useState(false);
 
-
     useEffect(() => {
         const fetchUserName = async () => {
             try {
@@ -41,9 +40,6 @@ const HomePage = () => {
         };
         fetchUserName();
     }, []);
-    
-    
-    console.log(userName)
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -62,7 +58,6 @@ const HomePage = () => {
         setShowAttendance(false); // Oculta la asistencia
         setShowAtrasos(false);
         setShowRegistro(false);
-
     };
 
     const toggleAtraso = () => {
@@ -70,21 +65,20 @@ const HomePage = () => {
         setShowAttendance(false); // Oculta la asistencia
         setShowReports(false); // Oculta los reportes
         setShowRegistro(false);
-
     };
 
     const toggleRegistro = () => {
-        setShowRegistro(!showRegistro); // Cambia el estado para mostrar/ocultar AtrasosPage
+        setShowRegistro(!showRegistro); // Cambia el estado para mostrar/ocultar Registrar Usuario
         setShowAttendance(false); // Oculta la asistencia
         setShowReports(false); // Oculta los reportes
         setShowAtrasos(false);
     };
-    
 
     const styles = {
         homepageContainer: {
             display: 'flex',
             height: '100vh',
+            overflow: 'hidden',
         },
         sidebar: {
             width: '250px',
@@ -93,7 +87,8 @@ const HomePage = () => {
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',  // Asegura que los elementos se distribuyan en la barra lateral
+            justifyContent: 'space-between',
+            minHeight: '100vh', // Asegura que la barra lateral ocupe toda la altura
         },
         logo: {
             width: '90%',  // Ajusta el tamaño de la imagen del logo
@@ -127,6 +122,7 @@ const HomePage = () => {
             flexGrow: '1',
             display: 'flex',
             flexDirection: 'column',
+            overflow: 'auto', // Permite que el contenido principal sea desplazable si es necesario
         },
         topbar: {
             display: 'flex',
@@ -148,7 +144,6 @@ const HomePage = () => {
             padding: '20px',
             backgroundColor: '#f7f9f9',
             flexGrow: '1',
-            marginTop: '-20px',
         },
         welcomeText: {
             fontSize: '24px',
@@ -173,14 +168,14 @@ const HomePage = () => {
                     <ul style={styles.sidebarList}>
                         <li
                             style={styles.sidebarListItem}
-                            onClick={toggleAttendance} // Cambia aquí para mostrar/ocultar AttendancePage
+                            onClick={toggleAttendance}
                         >
                             <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
                             Control de atrasos
                         </li>
                         <li
                             style={styles.sidebarListItem}
-                            onClick={toggleReports} // Cambia aquí para mostrar/ocultar ReportsPage
+                            onClick={toggleReports}
                         >
                             <img src={reportIcon} alt="Reportes" style={styles.icon} />
                             Reportes
@@ -219,28 +214,17 @@ const HomePage = () => {
                 </div>
                 {/* Main view */}
                 <div style={styles.contentArea}>
-                    {/* Muestra el mensaje de bienvenida solo si showAttendance y showReports son false */}
-                    {!showAttendance && !showReports && !showAtrasos && !showRegistro &&(
+                    {!showAttendance && !showReports && !showAtrasos && !showRegistro && (
                         <>
                             <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
                             <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
                         </>
                     )}
                     
-                    {/* Muestra AttendancePage si showAttendance es true */}
                     {showAttendance && <AttendancePage />}
-                    
-                    {/* Muestra ReportsPage si showReports es true */}
                     {showReports && <ReportsPage />}
-
-                    {/* Muestra AtrasosPage si showReports es true */}
                     {showAtrasos && <AtrasosPage />}
-
-                    {/* Muestra AtrasosPage si showReports es true */}
                     {showRegistro && <RegisterPage />}
-                    
-                    
-                
                 </div>
             </div>
         </div>

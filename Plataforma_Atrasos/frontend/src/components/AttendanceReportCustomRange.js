@@ -1,5 +1,3 @@
-// src/components/AttendanceReportCustomRange.js
-
 import React, { useState } from 'react';
 import axios from 'axios';
 import {
@@ -11,7 +9,7 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
-} from 'recharts'; // Importar componentes de Recharts
+} from 'recharts';
 
 const AttendanceReportCustomRange = () => {
     const [startDate, setStartDate] = useState('');
@@ -19,17 +17,15 @@ const AttendanceReportCustomRange = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showChart, setShowChart] = useState(false); // Estado para mostrar/ocultar la gráfica
-    const [chartData, setChartData] = useState([]); // Estado para almacenar los datos de la gráfica
+    const [showChart, setShowChart] = useState(false);
+    const [chartData, setChartData] = useState([]);
 
     const handleGenerateReport = async () => {
-        // Validar que ambas fechas estén seleccionadas
         if (!startDate || !endDate) {
             setError('Por favor, selecciona ambas fechas.');
             return;
         }
 
-        // Validar que startDate no sea posterior a endDate
         if (new Date(startDate) > new Date(endDate)) {
             setError('La fecha de inicio no puede ser posterior a la fecha de fin.');
             return;
@@ -38,15 +34,15 @@ const AttendanceReportCustomRange = () => {
         setLoading(true);
         setError('');
         setReportData(null);
-        setShowChart(false); // Ocultar la gráfica al generar un nuevo reporte
-        setChartData([]); // Limpiar datos de la gráfica
+        setShowChart(false);
+        setChartData([]);
 
         try {
-            const response = await axios.get(`http://localhost:3000/api/atrasos/rango`, { // Asegúrate de que el puerto y la URL sean correctos
+            const response = await axios.get('http://localhost:3000/api/atrasos/rango', {
                 params: {
                     startDate,
-                    endDate
-                }
+                    endDate,
+                },
             });
 
             setReportData(response.data);
@@ -67,7 +63,6 @@ const AttendanceReportCustomRange = () => {
             return [];
         }
 
-        // Crear un objeto para contar atrasos por fecha
         const counts = {};
 
         reportData.atrasos.forEach((atraso) => {
@@ -75,13 +70,11 @@ const AttendanceReportCustomRange = () => {
             counts[date] = (counts[date] || 0) + 1;
         });
 
-        // Convertir el objeto a un array para Recharts
         const data = Object.keys(counts).map((date) => ({
             fecha: date,
             cantidad: counts[date],
         }));
 
-        // Opcional: Ordenar las fechas
         data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
         return data;
@@ -92,7 +85,7 @@ const AttendanceReportCustomRange = () => {
             const data = processChartData();
             setChartData(data);
         }
-        setShowChart(prev => !prev); // Alternar el estado de la gráfica
+        setShowChart((prev) => !prev);
     };
 
     return (
@@ -130,37 +123,36 @@ const AttendanceReportCustomRange = () => {
             {reportData && (
                 <div style={styles.reportContainer}>
                     <h3>
-                        Reporte de Atrasos del {new Date(reportData.startDate).toLocaleDateString()} al {new Date(reportData.endDate).toLocaleDateString()}
+                        Reporte de Atrasos del {new Date(reportData.startDate).toLocaleDateString()} al{' '}
+                        {new Date(reportData.endDate).toLocaleDateString()}
                     </h3>
                     {reportData.atrasos.length > 0 ? (
                         <>
-                            {/* Contenedor con scrollbar para la tabla */}
                             <div style={styles.tableContainer}>
                                 <table style={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>RUT Alumno</th>
-                                            <th>Nombre Completo</th>
-                                            <th>Curso</th>
-                                            <th>Fecha de Atraso</th>
-                                            <th>Justificativo</th>
+                                            <th style={styles.th}>RUT Alumno</th>
+                                            <th style={styles.th}>Nombre Completo</th>
+                                            <th style={styles.th}>Curso</th>
+                                            <th style={styles.th}>Fecha de Atraso</th>
+                                            <th style={styles.th}>Justificativo</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {reportData.atrasos.map((atraso, index) => (
-                                            <tr key={index}>
-                                                <td>{atraso.RUT_ALUMNO}</td>
-                                                <td>{atraso.NOMBRE_COMPLETO}</td>
-                                                <td>{atraso.NOMBRE_CURSO}</td>
-                                                <td>{new Date(atraso.FECHA_ATRASOS).toLocaleString()}</td>
-                                                <td>{atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
+                                            <tr key={index} style={styles.tr}>
+                                                <td style={styles.td}>{atraso.RUT_ALUMNO}</td>
+                                                <td style={styles.td}>{atraso.NOMBRE_COMPLETO}</td>
+                                                <td style={styles.td}>{atraso.NOMBRE_CURSO}</td>
+                                                <td style={styles.td}>{new Date(atraso.FECHA_ATRASOS).toLocaleString()}</td>
+                                                <td style={styles.td}>{atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
 
-                            {/* Botón Toggle para la gráfica */}
                             <button
                                 onClick={toggleChart}
                                 style={styles.chartButton}
@@ -169,7 +161,6 @@ const AttendanceReportCustomRange = () => {
                                 {showChart ? 'Ocultar Gráfica de Atrasos' : 'Mostrar Gráfica de Atrasos'}
                             </button>
 
-                            {/* Renderizar la gráfica si showChart es true */}
                             {showChart && chartData.length > 0 && (
                                 <div style={styles.chartContainer}>
                                     <h3>Cantidad de Atrasos por Fecha</h3>
@@ -206,34 +197,38 @@ const AttendanceReportCustomRange = () => {
 const styles = {
     container: {
         padding: '20px',
-        border: '1px solid #ccc',
-        borderRadius: '5px',
+        border: '1px solid #ddd',
+        borderRadius: '10px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        backgroundColor: '#f9f9f9',
         marginTop: '20px',
     },
     inputContainer: {
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: '15px',
         marginBottom: '20px',
-        flexWrap: 'wrap', // Para manejar mejor en pantallas pequeñas
+        flexWrap: 'wrap',
     },
     datePicker: {
         display: 'flex',
         flexDirection: 'column',
     },
     input: {
-        padding: '5px',
+        padding: '10px',
+        border: '1px solid #ccc',
+        borderRadius: '5px',
         marginTop: '5px',
-        width: '150px', // Definir un ancho fijo para consistencia
+        width: '180px',
     },
     button: {
         padding: '10px 20px',
-        backgroundColor: '#28a745',
+        backgroundColor: '#007bff',
         color: 'white',
         border: 'none',
         borderRadius: '5px',
         cursor: 'pointer',
-        flexShrink: 0, // Evitar que el botón se reduzca en pantallas pequeñas
+        transition: 'background-color 0.3s ease',
     },
     chartButton: {
         padding: '10px 20px',
@@ -243,37 +238,56 @@ const styles = {
         borderRadius: '5px',
         cursor: 'pointer',
         marginTop: '10px',
+        transition: 'background-color 0.3s ease',
     },
     error: {
         color: 'red',
+        fontWeight: 'bold',
     },
     reportContainer: {
         marginTop: '20px',
     },
     tableContainer: {
-        maxHeight: '400px', // Altura máxima del contenedor
-        overflowY: 'auto', // Habilitar scroll vertical
+        maxHeight: '400px',
+        overflowY: 'auto',
         border: '1px solid #ddd',
-        borderRadius: '5px',
+        borderRadius: '10px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
     },
     table: {
         width: '100%',
-        borderCollapse: 'collapse',
+        borderCollapse: 'separate',
+        borderSpacing: '0 10px', // Separación entre las filas
+        fontFamily: '"Roboto", sans-serif',
     },
     th: {
-        border: '1px solid #ddd',
-        padding: '8px',
-        backgroundColor: '#f2f2f2',
-        position: 'sticky', // Para mantener los encabezados visibles al hacer scroll
-        top: 0,
-        zIndex: 1,
+        padding: '10px',
+        backgroundColor: '#007bff',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px 8px 0 0',
+        textAlign: 'left',
     },
     td: {
-        border: '1px solid #ddd',
-        padding: '8px',
+        padding: '10px',
+        backgroundColor: '#f9f9f9',
+        borderBottom: '1px solid #ddd',
+        textAlign: 'left',
+        borderRadius: '8px',
+        transition: 'background-color 0.3s ease',
+    },
+    tr: {
+        cursor: 'pointer',
+    },
+    trHover: {
+        backgroundColor: '#f0f0f0',
     },
     chartContainer: {
-        marginTop: '40px',
+        marginTop: '20px',
+        padding: '10px',
+        border: '1px solid #ddd',
+        borderRadius: '10px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
     },
 };
 
