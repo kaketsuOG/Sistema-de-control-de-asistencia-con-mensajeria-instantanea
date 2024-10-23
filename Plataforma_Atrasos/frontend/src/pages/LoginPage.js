@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './LoginPage.css';
+import { login } from '../services/authService';
 
 const LoginPage = () => {
     const [rutUsername, setRutUsername] = useState('');
@@ -10,8 +11,13 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!rutUsername || !contraseña) {
+            setError("Por favor completa todos los campos");
+            return;
+        }
+
         try {
-            //const user = await login(rutUsername, contraseña);
+            await login(rutUsername, contraseña);
             localStorage.setItem('RUT_USERNAME', rutUsername); // Guardar el RUT en localStorage
             window.location.href = '/home';
         } catch (err) {
