@@ -37,8 +37,9 @@ useEffect(() => {
         const matchesCurso = searchCurso === '' || (atraso.NOMBRE_CURSO && atraso.NOMBRE_CURSO.toLowerCase().includes(searchCurso.toLowerCase()));
         const matchesFecha = searchFecha === '' || format(new Date(atraso.FECHA_ATRASOS), 'yyyy-MM-dd') === searchFecha;
         const matchesJustificativo = searchJustificativo === '' || 
-            (searchJustificativo === 'Sí' && atraso.JUSTIFICATIVO) ||
+            (searchJustificativo !== 'No' && atraso.TIPO_JUSTIFICATIVO.includes(searchJustificativo)) ||
             (searchJustificativo === 'No' && !atraso.JUSTIFICATIVO);
+
         
         return matchesNombre && matchesCurso && matchesFecha && matchesJustificativo;
     });
@@ -146,7 +147,9 @@ useEffect(() => {
                         style={styles.searchInput}
                     >
                         <option value="">Filtrar por justificativo</option>
-                        <option value="Sí">Sí</option>
+                        <option value="Residencial">Residencial</option>
+                        <option value="Médico">Médico</option>
+                        <option value="Deportivo">Deportivo</option>
                         <option value="No">No</option>
                     </select>
                 </div>
@@ -161,7 +164,8 @@ useEffect(() => {
                                 <strong>Nombre:</strong> {atraso.NOMBRE_COMPLETO} <br />
                                 <strong>Curso:</strong> {atraso.NOMBRE_CURSO} <br />
                                 <strong>Fecha:</strong> {format(new Date(atraso.FECHA_ATRASOS), 'dd/MM/yyyy HH:mm:ss')} <br />
-                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? `${atraso.TIPO_JUSTIFICATIVO}` : 'No'}
+                                <strong>Justificativo:</strong> {atraso.JUSTIFICATIVO ? atraso.TIPO_JUSTIFICATIVO.replace(/,/g, ' y ') : 'No'}
+
 
 
                             </div>

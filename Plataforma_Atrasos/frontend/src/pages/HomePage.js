@@ -217,7 +217,7 @@ const HomePage = () => {
                     {!showAttendance && !showReports && !showAtrasos && !showRegistro && (
                         <>
                             <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
-                            <p>Aquí puedes ver el control de atrasos y otras funcionalidades.</p>
+                            <p></p>
                         </>
                     )}
                     

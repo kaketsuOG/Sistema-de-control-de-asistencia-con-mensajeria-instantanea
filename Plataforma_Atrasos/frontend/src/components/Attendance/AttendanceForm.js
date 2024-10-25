@@ -206,11 +206,22 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                 </div>
                 {mostrarJustificativo && (
                     <p style={styles.justificativoText}>
-                        {nombreAlumno ? `${nombreAlumno} ` : ''} 
-                        {residenciaJustificativo && 'presenta justificativo de residencia.'}
-                        {medicoJustificativo && 'presenta justificativo médico.'}
-                        {deportivoJustificativo && 'presenta justificativo deportivo.'}
-                        {!residenciaJustificativo && !medicoJustificativo && !deportivoJustificativo && 'no presenta justificativos.'}
+                    {nombreAlumno ? `${nombreAlumno} ` : ''}
+                    {[
+                        residenciaJustificativo && 'residencia',
+                        medicoJustificativo && 'médico',
+                        deportivoJustificativo && 'deportivo'
+                    ]
+                        .filter(Boolean)
+                        .join(' y ')
+                        ? `presenta justificativo de ${[
+                            residenciaJustificativo && 'residencia',
+                            medicoJustificativo && 'médico',
+                            deportivoJustificativo && 'deportivo'
+                        ]
+                        .filter(Boolean)
+                        .join(' y ')}.`
+                        : 'no presenta justificativos.'}
                     </p>
                 )}
                 <label style={styles.label}>Fecha del Atraso</label>
