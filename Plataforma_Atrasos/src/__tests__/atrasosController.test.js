@@ -1,73 +1,69 @@
-// src/__tests__/atrasosController.test.js
-jest.mock('../utils/whatsappClient', () => jest.fn(() => ({
-  initialize: jest.fn(),
-  sendMessage: jest.fn(),
-})));
+const request = require('supertest');
+const express = require('express');
+const app = express();
+const db = require('../config/db'); // Importa tu configuración de DB
+const atrasosController = require('./atrasosController');
 
-const atrasosController = require('../controllers/atrasosController');
+// Configura el middleware de express
+app.use(express.json());
 
-// Mock de los objetos req y res
-const mockRequest = (body = {}) => ({
-  body,
-});
+// Rutas de prueba
+app.get('/atrasos', atrasosController.getAllAtrasos);
+app.post('/atrasos', atrasosController.createAtraso);
+app.put('/atrasos/:id', atrasosController.updateAtraso);
+app.delete('/atrasos/:id', atrasosController.deleteAtraso);
+app.get('/atrasos/dia', atrasosController.getAtrasosDelDia);
 
-const mockResponse = () => {
-  const res = {};
-  res.status = jest.fn().mockReturnThis();
-  res.json = jest.fn().mockReturnThis();
-  return res;
-};
+// Mock de la base de datos
+jest.mock('../config/db', () => ({
+  query: jest.fn((query, params, callback) => {
+    if (query.includes('SELECT')) {
+      callback(null, [{ RUT_ALUMNO: '12345678-9', FECHA_ATRASOS: '2024-10-28', JUSTIFICATIVO: 0 }]);
+    } else if (query.includes('INSERT')) {
+      callback(null, { insertId: 1 });
+    } else {
+      callback(null, {});
+    }
+  }),
+}));
 
-describe('Pruebas del controlador atrasosController', () => {
-  describe('Función getAllAtrasos', () => {
-    it('Debería obtener todos los atrasos exitosamente', async () => {
-      const req = mockRequest();
-      const res = mockResponse();
-
-      atrasosController.getAllAtrasos = jest.fn().mockResolvedValue([{ id: 1, motivo: 'Ejemplo' }]);
-
-      await atrasosController.getAllAtrasos(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith([{ id: 1, motivo: 'Ejemplo' }]);
-    });
-
-    it('Debería manejar errores de base de datos', async () => {
-      const req = mockRequest();
-      const res = mockResponse();
-
-      atrasosController.getAllAtrasos = jest.fn().mockRejectedValue(new Error('Error en la base de datos'));
-
-      await atrasosController.getAllAtrasos(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Error al obtener los atrasos' });
+describe('Atrasos Controller', () => {
+  describe('GET /atrasos', () => {
+    it('debe devolver todos los atrasos', async () => {
+      const response = await request(app).get('/atrasos');
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(expect.arrayContaining([expect.objectContaining({ RUT_ALUMNO: '12345678-9' })]));
     });
   });
 
-  describe('Función createAtraso', () => {
-    it('Debería crear un nuevo atraso', async () => {
-      const req = mockRequest({ motivo: 'Llegada tarde', fecha: '2024-10-28' });
-      const res = mockResponse();
-
-      atrasosController.createAtraso = jest.fn().mockResolvedValue({ id: 1, message: 'Atraso registrado exitosamente' });
-
-      await atrasosController.createAtraso(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Atraso registrado exitosamente' });
+  describe('POST /atrasos', () => {
+    it('debe crear un nuevo atraso', async () => {
+      const response = await request(app).post('/atrasos').send({ rutAlumno: '12345678-9' });
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('message', 'Atraso creado con éxito');
+      expect(response.body).toHaveProperty('id', 1);
     });
 
-    it('Debería manejar errores al crear un atraso', async () => {
-      const req = mockRequest({ motivo: 'Llegada tarde', fecha: '2024-10-28' });
-      const res = mockResponse();
+    it('debe devolver error si faltan datos', async () => {
+      const response = await request(app).post('/atrasos').send({});
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Faltan datos requeridos');
+    });
+  });
 
-      atrasosController.createAtraso = jest.fn().mockRejectedValue(new Error('Error al registrar el atraso'));
+  describe('PUT /atrasos/:id', () => {
+    it('debe actualizar un atraso existente', async () => {
+      const response = await request(app).put('/atrasos/1').send({ rutAlumno: '12345678-9', fechaAtrasos: new Date(), justificativo: false });
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('message', 'Atraso actualizado con éxito');
+    });
+  });
 
-      await atrasosController.createAtraso(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Error al registrar el atraso' });
+  describe('DELETE /atrasos/:id', () => {
+    it('debe eliminar un atraso', async () => {
+      const response = await request(app).delete('/atrasos/1');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('message', 'Atraso eliminado con éxito');
     });
   });
 });

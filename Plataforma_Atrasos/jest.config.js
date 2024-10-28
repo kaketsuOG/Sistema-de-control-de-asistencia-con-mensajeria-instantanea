@@ -23,7 +23,7 @@ module.exports = {
     {
       displayName: 'backend',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/backend/src/**/*.test.js'],
+      testMatch: ['<rootDir>/src/**/*.test.js'],
       transform: {
         '^.+\\.(js|jsx)$': 'babel-jest'
       }
