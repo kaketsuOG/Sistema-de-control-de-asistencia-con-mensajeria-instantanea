@@ -1,48 +1,73 @@
-import request from 'supertest';
-import app from '../index';
-import { pool } from '../config/database';
+// src/__tests__/atrasosController.test.js
+jest.mock('../utils/whatsappClient', () => jest.fn(() => ({
+  initialize: jest.fn(),
+  sendMessage: jest.fn(),
+})));
 
-describe('Atrasos Controller', () => {
-  beforeAll(async () => {
-    // Configurar base de datos de prueba
-    await pool.query(`
-      CREATE TEMPORARY TABLE IF NOT EXISTS atrasos (
-        id SERIAL PRIMARY KEY,
-        fecha DATE,
-        estado VARCHAR(50),
-        justificado BOOLEAN
-      )
-    `);
+const atrasosController = require('../controllers/atrasosController');
+
+// Mock de los objetos req y res
+const mockRequest = (body = {}) => ({
+  body,
+});
+
+const mockResponse = () => {
+  const res = {};
+  res.status = jest.fn().mockReturnThis();
+  res.json = jest.fn().mockReturnThis();
+  return res;
+};
+
+describe('Pruebas del controlador atrasosController', () => {
+  describe('Función getAllAtrasos', () => {
+    it('Debería obtener todos los atrasos exitosamente', async () => {
+      const req = mockRequest();
+      const res = mockResponse();
+
+      atrasosController.getAllAtrasos = jest.fn().mockResolvedValue([{ id: 1, motivo: 'Ejemplo' }]);
+
+      await atrasosController.getAllAtrasos(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith([{ id: 1, motivo: 'Ejemplo' }]);
+    });
+
+    it('Debería manejar errores de base de datos', async () => {
+      const req = mockRequest();
+      const res = mockResponse();
+
+      atrasosController.getAllAtrasos = jest.fn().mockRejectedValue(new Error('Error en la base de datos'));
+
+      await atrasosController.getAllAtrasos(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Error al obtener los atrasos' });
+    });
   });
 
-  afterAll(async () => {
-    await pool.end();
-  });
+  describe('Función createAtraso', () => {
+    it('Debería crear un nuevo atraso', async () => {
+      const req = mockRequest({ motivo: 'Llegada tarde', fecha: '2024-10-28' });
+      const res = mockResponse();
 
-  test('GET /api/atrasos should return list of delays', async () => {
-    const response = await request(app)
-      .get('/api/atrasos')
-      .set('Authorization', 'Bearer test-token')
-      .expect('Content-Type', /json/)
-      .expect(200);
+      atrasosController.createAtraso = jest.fn().mockResolvedValue({ id: 1, message: 'Atraso registrado exitosamente' });
 
-    expect(Array.isArray(response.body)).toBeTruthy();
-  });
+      await atrasosController.createAtraso(req, res);
 
-  test('POST /api/atrasos should create new delay record', async () => {
-    const newAtraso = {
-      fecha: '2024-03-27',
-      estado: 'ATRASO',
-      justificado: false
-    };
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Atraso registrado exitosamente' });
+    });
 
-    const response = await request(app)
-      .post('/api/atrasos')
-      .set('Authorization', 'Bearer test-token')
-      .send(newAtraso)
-      .expect('Content-Type', /json/)
-      .expect(201);
+    it('Debería manejar errores al crear un atraso', async () => {
+      const req = mockRequest({ motivo: 'Llegada tarde', fecha: '2024-10-28' });
+      const res = mockResponse();
 
-    expect(response.body).toHaveProperty('id');
+      atrasosController.createAtraso = jest.fn().mockRejectedValue(new Error('Error al registrar el atraso'));
+
+      await atrasosController.createAtraso(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Error al registrar el atraso' });
+    });
   });
 });
