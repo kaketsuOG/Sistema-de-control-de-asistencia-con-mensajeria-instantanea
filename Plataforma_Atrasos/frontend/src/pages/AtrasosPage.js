@@ -196,80 +196,89 @@ const AtrasosPage = () => {
 const styles = {
     container: {
         maxWidth: '1200px',
-        margin: '20px auto',
-        padding: '20px',
+        margin: '2rem auto',
+        padding: '1.5rem',
         backgroundColor: '#ffffff',
-        borderRadius: '8px',
+        borderRadius: '0.5rem',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
     },
     title: {
         textAlign: 'center',
         color: 'black',
-        marginBottom: '15px',
+        marginBottom: '1rem',
     },
     filters: {
         display: 'flex',
-        gap: '10px',
-        marginBottom: '20px',
+        gap: '0.5rem',
+        marginBottom: '1.5rem',
     },
     filterInput: {
-        padding: '8px',
-        fontSize: '16px',
-        borderRadius: '4px',
+        padding: '0.5rem',
+        fontSize: '1rem',
+        borderRadius: '0.375rem',
         border: '1px solid #ccc',
     },
     pdfButton: {
         marginLeft: 'auto',
-        padding: '10px 20px',
-        backgroundColor: '#007bff',
+        padding: '0.5rem 1rem',
+        backgroundColor: '#01579b',
         color: '#fff',
         border: 'none',
-        borderRadius: '5px',
+        borderRadius: '0.375rem',
         cursor: 'pointer',
+        transition: 'background-color 0.2s',
+        '&:hover': {
+            backgroundColor: '#014377',
+        },
     },
     tableContainer: {
-        maxHeight: '500px', 
+        maxHeight: '500px',
         overflowY: 'auto',
-        marginTop: '20px',
+        marginTop: '1.5rem',
     },
     table: {
         width: '100%',
         borderCollapse: 'collapse',
     },
     headerCell: {
-        backgroundColor: '#007bff',
+        backgroundColor: '#01579b',
         color: '#ffffff',
-        padding: '10px',
+        padding: '0.75rem',
         textAlign: 'left',
         fontWeight: 'bold',
-        borderBottom: '2px solid #007bff',
+        borderBottom: '2px solid #01579b',
     },
     row: {
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#f7f9f9',
         transition: 'background-color 0.3s ease',
+        '&:hover': {
+            backgroundColor: 'rgba(1, 87, 155, 0.1)',
+        },
     },
     cell: {
-        padding: '10px',
+        padding: '0.75rem',
         borderBottom: '1px solid #ddd',
         textAlign: 'left',
     },
     noData: {
         textAlign: 'center',
         color: '#888',
-        marginTop: '20px',
+        marginTop: '1.5rem',
     },
     error: {
         color: 'red',
         textAlign: 'center',
+        marginTop: '1rem',
     },
     loading: {
         textAlign: 'center',
-        marginTop: '50px',
+        marginTop: '3rem',
     },
     pdfLink: {
-        color: '#007bff',
+        color: '#01579b',
         textDecoration: 'none',
     },
 };
+
 
 export default AtrasosPage;

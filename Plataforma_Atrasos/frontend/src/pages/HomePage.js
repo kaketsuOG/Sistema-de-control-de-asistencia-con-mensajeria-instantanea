@@ -1,32 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 // Importa los iconos
 import controlIcon from '../assets/icons/control.png';
 import reportIcon from '../assets/icons/report.png';
 import messageIcon from '../assets/icons/message.png';
 import agregarIcon from '../assets/icons/agregar-usuario.png';
-import AttendancePage from './AttendancePage'; // Asegúrate de que la ruta sea correcta
-import ReportsPage from './ReportsPage'; // Asegúrate de importar ReportsPage
-
-import logo from '../assets/images/logo.png'; // Importa la imagen del logo
-
+import AttendancePage from './AttendancePage';
+import ReportsPage from './ReportsPage';
 import AtrasosPage from './AtrasosPage';
 import RegisterPage from './RegisterPage';
+import logo from '../assets/images/logo.png';
 import axios from 'axios';
 
 const HomePage = () => {
     const navigate = useNavigate();
     const [userName, setUserName] = useState('');
-    const [showAttendance, setShowAttendance] = useState(false); // Estado para mostrar/ocultar AttendancePage
-    const [showReports, setShowReports] = useState(false); // Estado para mostrar/ocultar ReportsPage
+    const [showAttendance, setShowAttendance] = useState(false);
+    const [showReports, setShowReports] = useState(false);
     const [showAtrasos, setShowAtrasos] = useState(false);
     const [showRegistro, setShowRegistro] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            if (window.innerWidth >= 768) {
+                setIsSidebarOpen(true);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Inicializa el estado
+
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         const fetchUserName = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const rutUsername = localStorage.getItem('RUT_USERNAME'); // Almacena RUT_USERNAME en el login
+                const rutUsername = localStorage.getItem('RUT_USERNAME');
                 const response = await axios.get(`http://localhost:3000/auth/username/${rutUsername}`, {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -41,184 +56,238 @@ const HomePage = () => {
         fetchUserName();
     }, []);
 
+    const handleMenuClick = (action) => {
+        setShowAttendance(false);
+        setShowReports(false);
+        setShowAtrasos(false);
+        setShowRegistro(false);
+
+        switch(action) {
+            case 'attendance':
+                setShowAttendance(true);
+                break;
+            case 'reports':
+                setShowReports(true);
+                break;
+            case 'atrasos':
+                setShowAtrasos(true);
+                break;
+            case 'registro':
+                setShowRegistro(true);
+                break;
+            default:
+                break;
+        }
+
+        if (isMobile) {
+            setIsSidebarOpen(false);
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/login');
     };
 
-    const toggleAttendance = () => {
-        setShowAttendance(!showAttendance); // Cambia el estado al hacer clic
-        setShowReports(false); // Oculta los reportes
-        setShowAtrasos(false);
-        setShowRegistro(false);
-    };
-
-    const toggleReports = () => {
-        setShowReports(!showReports); // Cambia el estado al hacer clic
-        setShowAttendance(false); // Oculta la asistencia
-        setShowAtrasos(false);
-        setShowRegistro(false);
-    };
-
-    const toggleAtraso = () => {
-        setShowAtrasos(!showAtrasos); // Cambia el estado para mostrar/ocultar AtrasosPage
-        setShowAttendance(false); // Oculta la asistencia
-        setShowReports(false); // Oculta los reportes
-        setShowRegistro(false);
-    };
-
-    const toggleRegistro = () => {
-        setShowRegistro(!showRegistro); // Cambia el estado para mostrar/ocultar Registrar Usuario
-        setShowAttendance(false); // Oculta la asistencia
-        setShowReports(false); // Oculta los reportes
-        setShowAtrasos(false);
-    };
-
     const styles = {
-        homepageContainer: {
+        pageContainer: {
             display: 'flex',
-            height: '100vh',
-            overflow: 'hidden',
+            minHeight: '100vh',
+            backgroundColor: '#f7f9f9',
+            position: 'relative',
+        },
+        hamburgerButton: {
+            position: 'fixed',
+            top: '1rem',
+            left: '1rem',
+            zIndex: 50,
+            padding: '0.5rem',
+            backgroundColor: '#01579b',
+            borderRadius: '0.375rem',
+            color: 'white',
+            display: isMobile ? 'block' : 'none',
+            cursor: 'pointer',
+        },
+        overlay: {
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 30,
+            display: isMobile && isSidebarOpen ? 'block' : 'none',
         },
         sidebar: {
-            width: '250px',
+            position: isMobile ? 'fixed' : 'sticky',
+            top: 0,
+            left: 0,
+            height: '100vh',
+            width: '200px',
             backgroundColor: '#01579b',
             color: 'white',
-            padding: '20px',
+            zIndex: 40,
+            transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.3s ease-in-out',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            minHeight: '100vh', // Asegura que la barra lateral ocupe toda la altura
-        },
-        logo: {
-            width: '90%',  // Ajusta el tamaño de la imagen del logo
-            marginBottom: '10px',
-        },
-        sidebarTitle: {
-            marginBottom: '20px',
-            fontSize: '18px',
-        },
-        sidebarList: {
-            listStyle: 'none',
-            padding: '0',
-            marginTop: '10px',
-        },
-        sidebarListItem: {
-            display: 'flex',
-            alignItems: 'center',
-            margin: '10px 0',
-            cursor: 'pointer',
-            padding: '10px',
-            borderRadius: '5px',
-            transition: 'background-color 0.3s',
-        },
-        icon: {
-            width: '30px',
-            height: '30px',
-            marginRight: '10px',
-            color: 'white',
+            flexShrink: 0,
         },
         mainContent: {
-            flexGrow: '1',
+            flex: '1',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'auto', // Permite que el contenido principal sea desplazable si es necesario
+            width: '100%',
+            minHeight: '100vh',
+        },
+        sidebarContent: {
+            padding: '1.5rem',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+        },
+        menuItem: {
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0.75rem',
+            marginBottom: '0.5rem',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
+        },
+        icon: {
+            width: '24px',
+            height: '24px',
+            marginRight: '0.75rem',
+        },
+        logo: {
+            width: '90%',
+            marginTop: 'auto',
+            marginBottom: '1rem',
+            alignSelf: 'center',
         },
         topbar: {
+            backgroundColor: '#fff',
+            padding: '1rem',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+        },
+        topbarContent: {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '10px 20px',
-            backgroundColor: '#ecf0f1',
-            boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+            width: '100%',
+            paddingLeft: isMobile ? '3rem' : '1rem',
+            paddingRight: '1rem',
         },
         logoutButton: {
             backgroundColor: '#e74c3c',
             color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.375rem',
             border: 'none',
-            padding: '10px 15px',
             cursor: 'pointer',
-            borderRadius: '5px',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+                backgroundColor: '#c0392b',
+            },
         },
         contentArea: {
+            padding: '1.5rem',
+            flex: 1,
+            width: '100%',
+        },
+        contentWrapper: {
             padding: '20px',
-            backgroundColor: '#f7f9f9',
-            flexGrow: '1',
-        },
-        welcomeText: {
-            fontSize: '24px',
-            fontWeight: 'bold',
-            marginBottom: '10px',
-        },
-        sidebarTop: {
-            flexGrow: '1',
-        },
-        sidebarBottom: {
-            marginTop: 'auto', // Empuja el logo hacia la parte inferior
-        },
+            width: '100%',
+        }
     };
+    const MenuItem = ({ icon, text, onClick }) => (
+        <div 
+            style={styles.menuItem} 
+            onClick={onClick}
+            className="hover:bg-blue-800"
+        >
+            <img src={icon} alt={text} style={styles.icon} />
+            <span>{text}</span>
+        </div>
+    );
 
-    // Retorno del componente
     return (
-        <div style={styles.homepageContainer}>
+        <div style={styles.pageContainer}>
+            {/* Botón hamburguesa */}
+            <button 
+                style={styles.hamburgerButton}
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+                {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+
+            {/* Overlay */}
+            <div 
+                style={styles.overlay}
+                onClick={() => setIsSidebarOpen(false)}
+            />
+
             {/* Sidebar */}
             <div style={styles.sidebar}>
-                <div style={styles.sidebarTop}>
-                    <h3 style={styles.sidebarTitle}>Menú</h3>
-                    <ul style={styles.sidebarList}>
-                        <li
-                            style={styles.sidebarListItem}
-                            onClick={toggleAttendance}
-                        >
-                            <img src={controlIcon} alt="Control de Atrasos" style={styles.icon} />
-                            Control de atrasos
-                        </li>
-                        <li
-                            style={styles.sidebarListItem}
-                            onClick={toggleReports}
-                        >
-                            <img src={reportIcon} alt="Reportes" style={styles.icon} />
-                            Reportes
-                        </li>
-                        <li
-                            style={styles.sidebarListItem}
-                            onClick={toggleAtraso}
-                        >
-                            <img src={messageIcon} alt="Mensajería" style={styles.icon} />
-                            Mensajería
-                        </li>
-                        <li
-                            style={styles.sidebarListItem}
-                            onClick={toggleRegistro}
-                        >
-                            <img src={agregarIcon} alt="Agregar" style={styles.icon} />
-                            Registrar Usuario
-                        </li>
-                    </ul>
-                </div>
+                <div style={styles.sidebarContent}>
+                    <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Menú</h3>
+                    
+                    <MenuItem 
+                        icon={controlIcon}
+                        text="Control de atrasos"
+                        onClick={() => handleMenuClick('attendance')}
+                    />
+                    <MenuItem 
+                        icon={reportIcon}
+                        text="Reportes"
+                        onClick={() => handleMenuClick('reports')}
+                    />
+                    <MenuItem 
+                        icon={messageIcon}
+                        text="Mensajería"
+                        onClick={() => handleMenuClick('atrasos')}
+                    />
+                    <MenuItem 
+                        icon={agregarIcon}
+                        text="Registrar Usuario"
+                        onClick={() => handleMenuClick('registro')}
+                    />
 
-                {/* Logo en la parte inferior */}
-                <div style={styles.sidebarBottom}>
                     <img src={logo} alt="Logo" style={styles.logo} />
                 </div>
             </div>
 
-            {/* Main content */}
+            {/* Contenido principal */}
             <div style={styles.mainContent}>
-                {/* Topbar */}
+                {/* Barra superior */}
                 <div style={styles.topbar}>
-                    <h2>Sistema de Control de Atrasos</h2>
-                    <button style={styles.logoutButton} onClick={handleLogout}>
-                        Cerrar Sesión
-                    </button>
+                    <div style={styles.topbarContent}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                            Sistema de Control de Atrasos
+                        </h2>
+                        <button 
+                            style={styles.logoutButton}
+                            onClick={handleLogout}
+                            className="hover:bg-red-600"
+                        >
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
-                {/* Main view */}
+
+                {/* Área de contenido */}
                 <div style={styles.contentArea}>
                     {!showAttendance && !showReports && !showAtrasos && !showRegistro && (
-                        <>
-                            <h3 style={styles.welcomeText}>Bienvenido, {userName}!</h3>
-                            <p></p>
-                        </>
+                        <div className="text-center md:text-left">
+                            <h3 className="text-2xl font-bold mb-4">
+                                Bienvenido, {userName}!
+                            </h3>
+                        </div>
                     )}
                     
                     {showAttendance && <AttendancePage />}
