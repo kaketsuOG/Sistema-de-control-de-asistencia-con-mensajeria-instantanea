@@ -6,7 +6,7 @@ const atrasosController = require('../controllers/atrasosController');
 // Obtener todos los atrasos
 router.get('/atrasos', atrasosController.getAllAtrasos);
 
-// Ruta para obtener atrasos semanales
+// Ruta para obtener atrasos en un rango específico
 router.get('/atrasos/rango', atrasosController.getAtrasosRango);
 
 // Registrar un nuevo atraso
@@ -26,7 +26,5 @@ router.get('/SalidaPDF/:filename', (req, res) => {
     const filePath = path.join(__dirname, '../SalidaPDF', req.params.filename);
     res.download(filePath); // Esto inicia la descarga del archivo
 });
-
-router.get('/reports', atrasosController.getAtrasosDelDia);
 
 module.exports = router;

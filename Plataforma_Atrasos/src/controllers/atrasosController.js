@@ -256,48 +256,35 @@ exports.getAtrasosDelDia = (req, res) => {
 };
 
 
-// *** Nueva Funcionalidad: Obtener atrasos semanales (de lunes a viernes) ***
+// Obtener atrasos en un rango de fechas con el tipo de justificativo
 exports.getAtrasosRango = (req, res) => {
     const { startDate, endDate } = req.query;
 
-    // Validar que ambas fechas estén presentes
     if (!startDate || !endDate) {
         return res.status(400).json({ error: 'Se requieren ambas fechas: startDate y endDate' });
     }
 
-    // Convertir las fechas a objetos Date
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Validar que las fechas sean válidas
     if (isNaN(start) || isNaN(end)) {
         return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD' });
     }
 
-    // Asegurarse de que startDate no sea posterior a endDate
-    if (start > end) {
-        return res.status(400).json({ error: 'startDate no puede ser posterior a endDate' });
-    }
-
-    // Establecer las horas para abarcar todo el día
-    start.setHours(0, 0, 0, 0); // Inicio del startDate
-    end.setHours(23, 59, 59, 999); // Fin del endDate
-
-    // Debugging: Imprimir las fechas calculadas
-    console.log('Fecha de Inicio:', start.toISOString());
-    console.log('Fecha de Fin:', end.toISOString());
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
 
     const query = `
         SELECT 
-            A.RUT_ALUMNO, 
-            A.FECHA_ATRASOS, 
-            A.JUSTIFICATIVO, 
-            CONCAT(
-                B.NOMBRE_ALUMNO, ' ', 
-                B.SEGUNDO_NOMBRE_ALUMNO, ' ', 
-                B.APELLIDO_PATERNO_ALUMNO, ' ', 
-                B.APELLIDO_MATERNO_ALUMNO
-            ) AS NOMBRE_COMPLETO, 
+            A.RUT_ALUMNO,
+            A.FECHA_ATRASOS,
+            CASE
+                WHEN B.JUSTIFICATIVO_RESIDENCIA = 1 THEN 'Residencia'
+                WHEN B.JUSTIFICATIVO_MEDICO = 1 THEN 'Médico'
+                WHEN B.JUSTIFICATIVO_DEPORTIVO = 1 THEN 'Deportivo'
+                ELSE 'Sin justificativo'
+            END AS TIPO_JUSTIFICATIVO,
+            CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO,
             C.NOMBRE_CURSO
         FROM 
             ATRASOS A
@@ -324,4 +311,3 @@ exports.getAtrasosRango = (req, res) => {
         });
     });
 };
-
