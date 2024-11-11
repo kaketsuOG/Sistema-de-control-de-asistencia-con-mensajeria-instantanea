@@ -11,6 +11,7 @@ const AtrasosPage = () => {
     const [searchRut, setSearchRut] = useState('');
     const [searchName, setSearchName] = useState('');
     const [searchCurso, setSearchCurso] = useState('');
+    const [searchMonth, setSearchMonth] = useState('');
 
     const fetchAtrasos = async () => {
         try {
@@ -33,7 +34,10 @@ const AtrasosPage = () => {
         const matchesName = atraso.NOMBRE_COMPLETO.toLowerCase().includes(searchName.toLowerCase());
         const matchesCurso = atraso.NOMBRE_CURSO.toLowerCase().includes(searchCurso.toLowerCase());
 
-        return matchesRut && matchesName && matchesCurso;
+        const fechaAtraso = new Date(atraso.FECHA_ATRASOS);
+        const matchesMonth = searchMonth ? fechaAtraso.getMonth() === parseInt(searchMonth) : true;
+
+        return matchesRut && matchesName && matchesCurso && matchesMonth;
     });
 
     // Función para generar el PDF con los datos filtrados
@@ -69,7 +73,14 @@ const AtrasosPage = () => {
         const rowHeight = 20; // Espacio entre filas
     
         filteredAtrasos.forEach((atraso) => {
-            if (yPosition < 50) { // Salto de página si ya no queda espacio
+            if (yPosition < 60) { // Salto de página si ya no queda espacio
+                // Dibujar la firma antes de pasar a la siguiente página
+                page.drawText('Firma Apoderado ________________', {
+                    x: 30,
+                    y: 40,
+                    size: fontSize,
+                    color: rgb(0, 0, 0),
+                });
                 page = pdfDoc.addPage([595, 842]);
                 yPosition = height - 40;
             }
@@ -87,6 +98,13 @@ const AtrasosPage = () => {
             page.drawText(atraso.NOMBRE_CURSO, { x: 520, y: yPosition, size: fontSize, color: rgb(0, 0, 0) });
     
             yPosition -= rowHeight; // Mover la posición hacia abajo para la siguiente fila
+        });
+
+        page.drawText('Firma Apoderado ________________', {
+            x: 30,
+            y: 40,
+            size: fontSize,
+            color: rgb(0, 0, 0),
         });
     
         const pdfBytes = await pdfDoc.save();
@@ -132,6 +150,25 @@ const AtrasosPage = () => {
                     onChange={(e) => setSearchCurso(e.target.value)} 
                     style={styles.filterInput}
                 />
+                <select
+                    value={searchMonth}
+                    onChange={(e) => setSearchMonth(e.target.value)}
+                    style={styles.filterInput}
+                >
+                    <option value="">Seleccionar Mes</option>
+                    <option value="0">Enero</option>
+                    <option value="1">Febrero</option>
+                    <option value="2">Marzo</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Mayo</option>
+                    <option value="5">Junio</option>
+                    <option value="6">Julio</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Septiembre</option>
+                    <option value="9">Octubre</option>
+                    <option value="10">Noviembre</option>
+                    <option value="11">Diciembre</option>
+                </select>
                 <button onClick={generatePDF} style={styles.pdfButton}>
                     Imprimir Reporte PDF
                 </button>
