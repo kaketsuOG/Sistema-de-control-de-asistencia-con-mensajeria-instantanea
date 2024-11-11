@@ -13,6 +13,9 @@ const AtrasosPage = () => {
     const [searchCurso, setSearchCurso] = useState('');
     const [searchMonth, setSearchMonth] = useState('');
 
+    const [sortField, setSortField] = useState('');
+    const [sortDirection, setSortDirection] = useState('asc');
+
     const fetchAtrasos = async () => {
         try {
             const response = await axios.get('http://localhost:3000/api/atrasos');
@@ -29,6 +32,33 @@ const AtrasosPage = () => {
         fetchAtrasos();
     }, []);
 
+    const handleSort = (field) => {
+        const isAsc = sortField === field && sortDirection === 'asc';
+        setSortDirection(isAsc ? 'desc' : 'asc');
+        setSortField(field);
+    };
+
+    // Función para ordenar los datos
+    const sortData = (data) => {
+        if (!sortField) return data;
+
+        return [...data].sort((a, b) => {
+            let aValue = a[sortField];
+            let bValue = b[sortField];
+
+            // Manejo especial para fechas
+            if (sortField === 'FECHA_ATRASOS') {
+                aValue = new Date(a[sortField]).getTime();
+                bValue = new Date(b[sortField]).getTime();
+            }
+
+            if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    };
+
+
     const filteredAtrasos = atrasos.filter((atraso) => {
         const matchesRut = atraso.RUT_ALUMNO.toLowerCase().includes(searchRut.toLowerCase());
         const matchesName = atraso.NOMBRE_COMPLETO.toLowerCase().includes(searchName.toLowerCase());
@@ -39,6 +69,8 @@ const AtrasosPage = () => {
 
         return matchesRut && matchesName && matchesCurso && matchesMonth;
     });
+
+    const sortedAndFilteredAtrasos = sortData(filteredAtrasos);
 
     // Función para generar el PDF con los datos filtrados
     const generatePDF = async () => {
@@ -169,30 +201,59 @@ const AtrasosPage = () => {
                     <option value="10">Noviembre</option>
                     <option value="11">Diciembre</option>
                 </select>
-                <button onClick={generatePDF} style={styles.pdfButton}>
+                <button onClick={() => generatePDF()} style={styles.pdfButton}>
                     Imprimir Reporte PDF
                 </button>
             </div>
 
-
-            {filteredAtrasos.length === 0 ? (
+            {sortedAndFilteredAtrasos.length === 0 ? (
                 <p style={styles.noData}>No hay atrasos registrados.</p>
             ) : (
-                <div style={styles.tableContainer}> {/* Contenedor para scrollbar */}
+                <div style={styles.tableContainer}>
                     <table style={styles.table}>
                         <thead>
                             <tr>
-                                <th style={styles.headerCell}>RUT Alumno</th>
-                                <th style={styles.headerCell}>Fecha Atraso</th>
-                                <th style={styles.headerCell}>Hora Atraso</th>
-                                <th style={styles.headerCell}>Justificativo</th>
-                                <th style={styles.headerCell}>Nombre Completo</th>
-                                <th style={styles.headerCell}>Curso</th>
+                                <th 
+                                    style={{...styles.headerCell, cursor: 'pointer'}} 
+                                    onClick={() => handleSort('RUT_ALUMNO')}
+                                >
+                                    RUT Alumno {sortField === 'RUT_ALUMNO' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th 
+                                    style={{...styles.headerCell, cursor: 'pointer'}} 
+                                    onClick={() => handleSort('FECHA_ATRASOS')}
+                                >
+                                    Fecha Atraso {sortField === 'FECHA_ATRASOS' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th 
+                                    style={{...styles.headerCell, cursor: 'pointer'}} 
+                                    onClick={() => handleSort('FECHA_ATRASOS')} // Usamos la misma fecha para ordenar por hora
+                                >
+                                    Hora Atraso {sortField === 'FECHA_ATRASOS' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th 
+                                    style={{...styles.headerCell, cursor: 'pointer'}} 
+                                    onClick={() => handleSort('JUSTIFICATIVO')}
+                                >
+                                    Justificativo {sortField === 'JUSTIFICATIVO' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th 
+                                    style={{...styles.headerCell, cursor: 'pointer'}} 
+                                    onClick={() => handleSort('NOMBRE_COMPLETO')}
+                                >
+                                    Nombre Completo {sortField === 'NOMBRE_COMPLETO' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th 
+                                    style={{...styles.headerCell, cursor: 'pointer'}} 
+                                    onClick={() => handleSort('NOMBRE_CURSO')}
+                                >
+                                    Curso {sortField === 'NOMBRE_CURSO' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                </th>
                                 <th style={styles.headerCell}>PDF</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredAtrasos.map((atraso) => {
+                            {sortedAndFilteredAtrasos.map((atraso) => {
                                 const fecha = new Date(atraso.FECHA_ATRASOS);
                                 const fechaFormateada = fecha.toLocaleDateString();
                                 const horaFormateada = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -208,7 +269,7 @@ const AtrasosPage = () => {
                                         <td style={styles.cell}>
                                             {atraso.pdf_path ? (
                                                 <a 
-                                                    href={`http://localhost:3000/SalidaPDF/${atraso.pdf_path}`} 
+                                                    href={`http://localhost:3000/SalidaPDF/${atraso.pdf_path}`}
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
                                                     download
@@ -230,6 +291,7 @@ const AtrasosPage = () => {
         </div>
     );
 };
+
 const styles = {
     container: {
         maxWidth: '1200px',
