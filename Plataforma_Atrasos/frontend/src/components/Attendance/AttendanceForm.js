@@ -1,68 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const AttendanceForm = ({ onSuccess, currentData }) => {
     const [rutAlumno, setRutAlumno] = useState(currentData?.rutAlumno || '');
-    const [nombreAlumno, setNombreAlumno] = useState(''); // Añadir estado para nombre del alumno
-    const [fechaAtrasos, setFechaAtraso] = useState(currentData?.fechaAtrasos || '');
+    const [nombreAlumno, setNombreAlumno] = useState('');
+    const [fechaAtrasos, setFechaAtraso] = useState(new Date());
     const [residenciaJustificativo, setResidenciaJustificativo] = useState(false);
-    const [medicoJustificativo, setMedicoJustificativo] = useState(false); // Justificativo médico
-    const [deportivoJustificativo, setDeportivoJustificativo] = useState(false); // Justificativo deportivo
+    const [medicoJustificativo, setMedicoJustificativo] = useState(false);
+    const [deportivoJustificativo, setDeportivoJustificativo] = useState(false);
     const [mostrarJustificativo, setMostrarJustificativo] = useState(false);
     const [error, setError] = useState('');
     const [notificationVisible, setNotificationVisible] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [isValidatingRut, setIsValidatingRut] = useState(false);
+    const rutInputRef = useRef(null);
 
     useEffect(() => {
         if (!currentData) {
             resetForm();
         } else {
             setRutAlumno(currentData.rutAlumno);
-            setFechaAtraso(currentData.fechaAtrasos);
+            setFechaAtraso(new Date());
             setResidenciaJustificativo(false);
             setMedicoJustificativo(false);
             setDeportivoJustificativo(false);
             setMostrarJustificativo(false);
             setError('');
         }
+        rutInputRef.current?.focus();
     }, [currentData]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setFechaAtraso(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        let timer;
+        if (error && error.includes('no existe')) {
+            timer = setTimeout(() => {
+                resetForm();
+            }, 2000);
+        }
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [error]);
 
     const resetForm = () => {
         setRutAlumno('');
-        setFechaAtraso('');
+        setFechaAtraso(new Date());
         setResidenciaJustificativo(false);
         setMedicoJustificativo(false);
         setDeportivoJustificativo(false);
         setMostrarJustificativo(false);
         setError('');
+        setNombreAlumno('');
+        rutInputRef.current?.focus();
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
+    const validarRutExistente = async (rut) => {
         try {
-            const url = currentData 
-                ? `http://localhost:3000/api/atrasos/${currentData.id}`
-                : 'http://localhost:3000/api/atrasos';
-            const method = currentData ? axios.put : axios.post;
-            const response = await method(url, { rutAlumno, fechaAtrasos, justificativo: residenciaJustificativo ? 1 : 0 });
-
-            if (response.status >= 200 && response.status < 300) {
-                setSuccessMessage('Atraso registrado y PDF generado con éxito.');
-                setNotificationVisible(true);
-
-                if (onSuccess) onSuccess();
-                resetForm();
-            } else {
-                setError('Error en la solicitud. Código de estado: ' + response.status);
-            }
-        } catch (err) {
-            setError('Error al guardar el atraso: ' + err.message);
+            const response = await axios.get(`http://localhost:3000/api/alumnos/verificar/${rut}`);
+            return response.data.exists;
+        } catch (error) {
+            console.error('Error al validar RUT:', error);
+            throw new Error('Error al validar el RUT');
         }
     };
 
     const checkJustificativos = async () => {
+        setIsValidatingRut(true);
+        setError('');
         try {
+            // Primero validamos si el RUT existe
+            const rutExiste = await validarRutExistente(rutAlumno);
+            if (!rutExiste) {
+                setError('El RUT ingresado no existe en la base de datos');
+                setMostrarJustificativo(false);
+                setNombreAlumno('');
+                return false;
+            }
+
             const response = await axios.get(`http://localhost:3000/api/alumnos/${rutAlumno}/residencia`);
             
             const tieneResidencia = response.data.justificativo_residencia === 1;
@@ -72,17 +91,68 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             setResidenciaJustificativo(tieneResidencia);
             setMedicoJustificativo(tieneMedico);
             setDeportivoJustificativo(tieneDeportivo);
-            setNombreAlumno(response.data.NOMBRE_ALUMNO || ''); // Extrae el nombre del alumno
+            setNombreAlumno(response.data.NOMBRE_ALUMNO || '');
             setMostrarJustificativo(true);
             setError('');
+            return true;
         } catch (err) {
             setResidenciaJustificativo(false);
             setMedicoJustificativo(false);
             setDeportivoJustificativo(false);
             setMostrarJustificativo(false);
-            setError('Error al verificar justificativos');
+            setError(err.response?.status === 404 
+                ? 'El RUT ingresado no existe en la base de datos' 
+                : 'Error al verificar justificativos');
+            return false;
+        } finally {
+            setIsValidatingRut(false);
         }
     };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+    
+        try {
+            const isValid = await checkJustificativos();
+            if (!isValid) {
+                return; // Si el RUT no es válido, detenemos el proceso
+            }
+            
+            setMostrarJustificativo(true);
+    
+            setTimeout(async () => {
+                const url = currentData 
+                    ? `http://localhost:3000/api/atrasos/${currentData.id}`
+                    : 'http://localhost:3000/api/atrasos';
+                const method = currentData ? axios.put : axios.post;
+                const response = await method(url, { rutAlumno, fechaAtrasos });
+    
+                if (response.status >= 200 && response.status < 300) {
+                    setSuccessMessage('Atraso registrado y PDF generado con éxito.');
+                    setNotificationVisible(true);
+    
+                    if (onSuccess) onSuccess();
+                    resetForm();
+                } else {
+                    setError('Error en la solicitud. Código de estado: ' + response.status);
+                }
+                
+                setMostrarJustificativo(false);
+            }, 2000);
+    
+        } catch (err) {
+            const errorMessage = err.response?.data?.error || 'Error al guardar el atraso: ' + err.message;
+            setError(errorMessage);
+            
+            // Si el error es de RUT no existente, se limpiará automáticamente por el useEffect
+            if (!errorMessage.includes('no existe')) {
+                // Para otros errores, no hacemos reset automático
+                setIsValidatingRut(false);
+            }
+        }
+    };
+
 
     useEffect(() => {
         if (notificationVisible) {
@@ -142,18 +212,28 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             borderRadius: '4px',
             cursor: 'pointer',
             fontWeight: 'bold',
+            opacity: isValidatingRut ? 0.7 : 1,
+            pointerEvents: isValidatingRut ? 'none' : 'auto',
         },
-        dateInput: {
-            width: '95%',
+        dateDisplay: {
+            width: '100%',
             padding: '10px',
-            borderRadius: '4px',
-            border: '1px solid #ddd',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            color: '#555',
             marginBottom: '20px',
+            fontSize: '18px',
         },
         error: {
             color: '#dc3545',
             textAlign: 'center',
             marginBottom: '15px',
+            padding: '10px',
+            backgroundColor: '#ffe6e6',
+            borderRadius: '4px',
+            width: '100%',
+            transition: 'opacity 0.5s ease-in-out',
+            opacity: error ? 1 : 0
         },
         success: {
             color: '#28a745',
@@ -181,7 +261,7 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         },
     };
 
-    return (
+  return (
         <div style={styles.container}>
             <h2 style={styles.title}>{currentData ? 'Editar Atraso' : 'Registrar Atraso'}</h2>
             {error && <p style={styles.error}>{error}</p>}
@@ -189,51 +269,41 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                 <label style={styles.label}>RUT Alumno</label>
                 <div style={styles.inputContainer}>
                     <input
+                        ref={rutInputRef} // Agrega la referencia al input
                         type="text"
                         value={rutAlumno}
                         onChange={(e) => setRutAlumno(e.target.value)}
                         placeholder="Ingrese RUT"
                         required
-                        style={styles.input}
+                        style={{
+                            ...styles.input,
+                            borderColor: error ? '#dc3545' : '#ddd'
+                        }}
+                        disabled={isValidatingRut}
                     />
-                    <button 
-                        type="button" 
-                        onClick={checkJustificativos} 
-                        style={styles.button}
-                    >
-                        Verificar
-                    </button>
                 </div>
-                {mostrarJustificativo && (
+                {mostrarJustificativo && nombreAlumno && (
                     <p style={styles.justificativoText}>
-                    {nombreAlumno ? `${nombreAlumno} ` : ''}
-                    {[
-                        residenciaJustificativo && 'residencia',
-                        medicoJustificativo && 'médico',
-                        deportivoJustificativo && 'deportivo'
-                    ]
-                        .filter(Boolean)
-                        .join(' y ')
-                        ? `presenta justificativo de ${[
+                        {nombreAlumno} {' '}
+                        {[
                             residenciaJustificativo && 'residencia',
                             medicoJustificativo && 'médico',
                             deportivoJustificativo && 'deportivo'
                         ]
-                        .filter(Boolean)
-                        .join(' y ')}.`
-                        : 'no presenta justificativos.'}
+                            .filter(Boolean)
+                            .join(' y ') || 'no presenta justificativos.'}
                     </p>
                 )}
-                <label style={styles.label}>Fecha del Atraso</label>
-                <input
-                    type="date"
-                    value={fechaAtrasos}
-                    onChange={(e) => setFechaAtraso(e.target.value)}
-                    required
-                    style={styles.dateInput}
-                />
-                <button type="submit" style={{ ...styles.button, width: '100%' }}>
-                    {currentData ? 'Actualizar' : 'Guardar'}
+                <label style={styles.label}>Fecha y Hora Actual</label>
+                <div style={styles.dateDisplay}>
+                    {fechaAtrasos.toLocaleString()}
+                </div>
+                <button 
+                    type="submit" 
+                    style={{ ...styles.button, width: '100%' }}
+                    disabled={isValidatingRut}
+                >
+                    {isValidatingRut ? 'Validando...' : (currentData ? 'Actualizar' : 'Guardar')}
                 </button>
             </form>
             {notificationVisible && <div style={styles.notification}>{successMessage}</div>}

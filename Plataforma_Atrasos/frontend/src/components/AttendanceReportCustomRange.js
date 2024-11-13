@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from 'recharts';
 
 const AttendanceReportCustomRange = () => {
     const [startDate, setStartDate] = useState('');
@@ -214,13 +222,15 @@ const styles = {
         width: '180px',
     },
     button: {
-        padding: '10px 20px',
+        padding: '15px 30px',
         backgroundColor: '#007bff',
         color: 'white',
         border: 'none',
         borderRadius: '5px',
         cursor: 'pointer',
         transition: 'background-color 0.3s ease',
+        marginTop: '20px',
+
     },
     chartButton: {
         padding: '10px 20px',

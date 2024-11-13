@@ -43,104 +43,112 @@ exports.getAllAtrasos = (req, res) => {
 };
 
 // Registrar un nuevo atraso
+// Registrar un nuevo atraso
 exports.createAtraso = async (req, res) => {
-    const { rutAlumno } = req.body; // Eliminamos CODATRASO del body
+    const { rutAlumno } = req.body;
     const fechaAtrasos = new Date();
 
     if (!rutAlumno) {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    // Consulta para obtener el tipo de justificativo del alumno
-    const tipoJustificativoQuery = `
-        SELECT JUSTIFICATIVO_RESIDENCIA, JUSTIFICATIVO_MEDICO, JUSTIFICATIVO_DEPORTIVO 
-        FROM ALUMNOS 
-        WHERE RUT_ALUMNO = ?;
-    `;
-
-    db.query(tipoJustificativoQuery, [rutAlumno], (error, results) => {
-        if (error) {
-            return res.status(500).json({ error: 'Error al obtener datos del alumno' });
+    // Primero verificamos si el RUT existe en la base de datos
+    const checkRutQuery = 'SELECT COUNT(*) as count FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+    
+    db.query(checkRutQuery, [rutAlumno], (checkError, checkResults) => {
+        if (checkError) {
+            return res.status(500).json({ error: 'Error al verificar el RUT del alumno' });
         }
 
-        const justificativos = results[0];
-        let tipoJustificativo = 'Sin justificativo'; // Valor por defecto
-        let justificativoValue = 0; // Inicializa JUSTIFICATIVO como 0
-
-        // Determinar el tipo de justificativo y actualizar el valor de JUSTIFICATIVO
-        if (justificativos.JUSTIFICATIVO_RESIDENCIA) {
-            tipoJustificativo = 'Residencia';
-            justificativoValue = 1; // Cambia a 1 si hay justificativo de residencia
-        } else if (justificativos.JUSTIFICATIVO_MEDICO) {
-            tipoJustificativo = 'Médico';
-            justificativoValue = 1; // Cambia a 1 si hay justificativo médico
-        } else if (justificativos.JUSTIFICATIVO_DEPORTIVO) {
-            tipoJustificativo = 'Deportivo';
-            justificativoValue = 1; // Cambia a 1 si hay justificativo deportivo
+        if (checkResults[0].count === 0) {
+            return res.status(404).json({ error: 'El RUT del alumno no existe en la base de datos' });
         }
 
-        // Inserta el atraso con el tipo de justificativo
-        const insertQuery = `
-            INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO, TIPO_JUSTIFICATIVO) 
-            VALUES (?, ?, ?, ?)
+        // Si el RUT existe, continuamos con la lógica original
+        const tipoJustificativoQuery = `
+            SELECT JUSTIFICATIVO_RESIDENCIA, JUSTIFICATIVO_MEDICO, JUSTIFICATIVO_DEPORTIVO 
+            FROM ALUMNOS 
+            WHERE RUT_ALUMNO = ?;
         `;
 
-        db.query(insertQuery, [rutAlumno, fechaAtrasos, justificativoValue, tipoJustificativo], async (insertError, results) => {
-            if (insertError) {
-                return res.status(500).json({ error: 'Error al insertar el atraso' });
+        db.query(tipoJustificativoQuery, [rutAlumno], (error, results) => {
+            if (error) {
+                return res.status(500).json({ error: 'Error al obtener datos del alumno' });
             }
 
-            const codAtraso = results.insertId; // Obtenemos el ID del atraso recién creado
+            const justificativos = results[0];
+            let tipoJustificativo = 'Sin justificativo';
+            let justificativoValue = 0;
 
-            try {
-                // Genera el PDF
-                const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
-                const pdfFileName = pdfPath.split('/').pop();
-                console.log('Nombre del PDF generado:', pdfFileName);
+            if (justificativos.JUSTIFICATIVO_RESIDENCIA) {
+                tipoJustificativo = 'Residencia';
+                justificativoValue = 1;
+            } else if (justificativos.JUSTIFICATIVO_MEDICO) {
+                tipoJustificativo = 'Médico';
+                justificativoValue = 1;
+            } else if (justificativos.JUSTIFICATIVO_DEPORTIVO) {
+                tipoJustificativo = 'Deportivo';
+                justificativoValue = 1;
+            }
 
-                // Actualizar el campo pdf_path en la tabla atrasos con el ID recién creado
-                const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
-                db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (error, result) => {
-                    if (error) {
-                        console.error('Error al actualizar la ruta del PDF en la base de datos:', error);
-                        return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });
-                    }
-                    console.log('Ruta del PDF actualizada correctamente en la base de datos.');
-                });
+            const insertQuery = `
+                INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO, TIPO_JUSTIFICATIVO) 
+                VALUES (?, ?, ?, ?)
+            `;
 
-                // Solo se enviará el mensaje si justificativoValue es 0 (sin justificativo)
-                if (justificativoValue === 0) {
-                    // Obtener el número de celular del apoderado
-                    const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-                    db.query(getCelularQuery, [rutAlumno], async (error, results) => {
-                        if (error) {
-                            console.error('Error al obtener el número de celular del apoderado:', error);
-                            return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
-                        }
-
-                        const celularApoderado = results[0]?.N_CELULAR_APODERADO;
-                        if (celularApoderado) {
-                            // Enviar solo el PDF por WhatsApp
-                            await sendPDF(celularApoderado, pdfPath);
-                        } else {
-                            console.error('Error: No se encontró el número de celular del apoderado.');
-                            return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
-                        }
-
-                        res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
-                    });
-                } else {
-                    console.log('El alumno tiene un justificativo, no se enviará el mensaje.');
-                    res.status(201).json({ message: 'Atraso creado con éxito, pero no se envió mensaje por justificativo', id: codAtraso });
+            db.query(insertQuery, [rutAlumno, fechaAtrasos, justificativoValue, tipoJustificativo], async (insertError, results) => {
+                if (insertError) {
+                    return res.status(500).json({ error: 'Error al insertar el atraso' });
                 }
 
-            } catch (pdfError) {
-                console.error('Error al generar PDF:', pdfError);
-                res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
-            }
+                const codAtraso = results.insertId;
+
+                try {
+                    const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
+                    const pdfFileName = pdfPath.split('/').pop();
+                    console.log('Nombre del PDF generado:', pdfFileName);
+
+                    const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
+                    db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (error, result) => {
+                        if (error) {
+                            console.error('Error al actualizar la ruta del PDF en la base de datos:', error);
+                            return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });
+                        }
+                        console.log('Ruta del PDF actualizada correctamente en la base de datos.');
+                    });
+
+                    if (justificativoValue === 0) {
+                        const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+                        db.query(getCelularQuery, [rutAlumno], async (error, results) => {
+                            if (error) {
+                                console.error('Error al obtener el número de celular del apoderado:', error);
+                                return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
+                            }
+
+                            const celularApoderado = results[0]?.N_CELULAR_APODERADO;
+                            if (celularApoderado) {
+                                await sendPDF(celularApoderado, pdfPath);
+                            } else {
+                                console.error('Error: No se encontró el número de celular del apoderado.');
+                                return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
+                            }
+
+                            res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
+                        });
+                    } else {
+                        console.log('El alumno tiene un justificativo, no se enviará el mensaje.');
+                        res.status(201).json({ message: 'Atraso creado con éxito, pero no se envió mensaje por justificativo', id: codAtraso });
+                    }
+
+                } catch (pdfError) {
+                    console.error('Error al generar PDF:', pdfError);
+                    res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
+                }
+            });
         });
     });
 };
+
 
 
 
@@ -264,5 +272,25 @@ exports.getAtrasosRango = (req, res) => {
             endDate: end.toISOString().split('T')[0],
             atrasos: results
         });
+    });
+};
+// Verificar si existe un RUT
+exports.verificarRut = (req, res) => {
+    const { rut } = req.params;
+    
+    if (!rut) {
+        return res.status(400).json({ error: 'RUT no proporcionado' });
+    }
+
+    const query = 'SELECT COUNT(*) as count FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+    
+    db.query(query, [rut], (error, results) => {
+        if (error) {
+            console.error('Error al verificar RUT:', error);
+            return res.status(500).json({ error: 'Error al verificar el RUT' });
+        }
+
+        const exists = results[0].count > 0;
+        res.json({ exists });
     });
 };

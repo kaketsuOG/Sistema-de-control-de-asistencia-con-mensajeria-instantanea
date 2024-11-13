@@ -9,6 +9,12 @@ router.get('/atrasos', atrasosController.getAllAtrasos);
 // Ruta para obtener atrasos en un rango específico
 router.get('/atrasos/rango', atrasosController.getAtrasosRango);
 
+// Ruta para verificar si existe el RUT
+router.get('/alumnos/verificar/:rut', atrasosController.verificarRut);
+
+// Ruta para obtener los atrasos del día (debe ir antes de la ruta con :id)
+router.get('/atrasos/dia', atrasosController.getAtrasosDelDia);
+
 // Registrar un nuevo atraso
 router.post('/atrasos', atrasosController.createAtraso);
 
@@ -17,9 +23,6 @@ router.put('/atrasos/:id', atrasosController.updateAtraso);
 
 // Eliminar un atraso
 router.delete('/atrasos/:id', atrasosController.deleteAtraso);
-
-// Nueva ruta para obtener los atrasos del día
-router.get('/atrasos/dia', atrasosController.getAtrasosDelDia);
 
 // Nueva ruta para descargar el PDF de los atrasos
 router.get('/SalidaPDF/:filename', (req, res) => {
