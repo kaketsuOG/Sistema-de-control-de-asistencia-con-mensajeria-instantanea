@@ -4,73 +4,184 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const AttendanceReportCustomRange = () => {
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
-    const [reportData, setReportData] = useState([]);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [reportData, setReportData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [showChart, setShowChart] = useState(false);
+    const [chartData, setChartData] = useState([]);
 
-    const fetchReportData = () => {
+    const handleGenerateReport = async () => {
         if (!startDate || !endDate) {
-            alert('Por favor, selecciona ambas fechas.');
+            setError('Por favor, selecciona ambas fechas.');
             return;
         }
 
-        // Formato de fecha en YYYY-MM-DD para el inicio del día
-        const formattedStartDate = startDate.toISOString().split('T')[0];
-        
-        // Formato de fecha en YYYY-MM-DD para el final del día
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999); // Configurar el final del día
-        const formattedEndDate = endOfDay.toISOString().split('T')[0];
+        if (new Date(startDate) > new Date(endDate)) {
+            setError('La fecha de inicio no puede ser posterior a la fecha de fin.');
+            return;
+        }
 
-        axios.get(`/api/atrasos/rango?startDate=${formattedStartDate}&endDate=${formattedEndDate}`)
-            .then(response => {
-                console.log(response.data); // Verificar la estructura de los datos
-                setReportData(response.data.atrasos);
-            })
-            .catch(error => {
-                console.error('Error al obtener los datos del reporte:', error);
+        setLoading(true);
+        setError('');
+        setReportData(null);
+        setShowChart(false);
+        setChartData([]);
+
+        try {
+            const response = await axios.get('http://localhost:3000/api/atrasos/rango', {
+                params: {
+                    startDate,
+                    endDate,
+                },
             });
+
+            setReportData(response.data);
+        } catch (err) {
+            console.error(err);
+            if (err.response && err.response.data && err.response.data.error) {
+                setError(err.response.data.error);
+            } else {
+                setError('Error al obtener el reporte.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const processChartData = () => {
+        if (!reportData || !reportData.atrasos) {
+            return [];
+        }
+
+        const counts = {};
+
+        reportData.atrasos.forEach((atraso) => {
+            const date = new Date(atraso.FECHA_ATRASOS).toLocaleDateString();
+            counts[date] = (counts[date] || 0) + 1;
+        });
+
+        const data = Object.keys(counts).map((date) => ({
+            fecha: date,
+            cantidad: counts[date],
+        }));
+
+        data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+        return data;
+    };
+
+    const toggleChart = () => {
+        if (!showChart) {
+            const data = processChartData();
+            setChartData(data);
+        }
+        setShowChart((prev) => !prev);
     };
 
     return (
-        <div>
-            <h2>Reporte de Atrasos - Rango Personalizado</h2>
-            <div>
-                <label>Fecha de inicio:</label>
-                <DatePicker
-                    selected={startDate}
-                    onChange={(date) => setStartDate(date)}
-                    dateFormat="yyyy-MM-dd"
-                />
+        <div style={styles.container}>
+            <h2>Reporte de Atrasos por Rango de Fechas</h2>
+            <div style={styles.inputContainer}>
+                <div style={styles.datePicker}>
+                    <label htmlFor="startDate">Fecha de Inicio:</label>
+                    <input
+                        type="date"
+                        id="startDate"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        style={styles.input}
+                    />
+                </div>
+                <div style={styles.datePicker}>
+                    <label htmlFor="endDate">Fecha de Fin:</label>
+                    <input
+                        type="date"
+                        id="endDate"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        style={styles.input}
+                    />
+                </div>
+                <button onClick={handleGenerateReport} style={styles.button}>
+                    Generar Reporte
+                </button>
             </div>
-            <div>
-                <label>Fecha de fin:</label>
-                <DatePicker
-                    selected={endDate}
-                    onChange={(date) => setEndDate(date)}
-                    dateFormat="yyyy-MM-dd"
-                />
-            </div>
-            <button onClick={fetchReportData}>Obtener Reporte</button>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Estudiante</th>
-                        <th>Justificativo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {reportData.map((atraso, index) => (
-                        <tr key={index}>
-                            <td>{atraso.FECHA_ATRASOS}</td>
-                            <td>{atraso.estudiante}</td>
-                            <td>{atraso.justificativo || 'Sin justificativo'}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+
+            {loading && <p>Cargando...</p>}
+            {error && <p style={styles.error}>{error}</p>}
+
+            {reportData && (
+                <div style={styles.reportContainer}>
+                    <h3>
+                        Reporte de Atrasos del {new Date(reportData.startDate).toLocaleDateString()} al{' '}
+                        {new Date(reportData.endDate).toLocaleDateString()}
+                    </h3>
+                    {reportData.atrasos.length > 0 ? (
+                        <>
+                            <div style={styles.tableContainer}>
+                                <table style={styles.table}>
+                                    <thead>
+                                        <tr>
+                                            <th style={styles.th}>RUT Alumno</th>
+                                            <th style={styles.th}>Nombre Completo</th>
+                                            <th style={styles.th}>Curso</th>
+                                            <th style={styles.th}>Fecha de Atraso</th>
+                                            <th style={styles.th}>Justificativo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.atrasos.map((atraso, index) => (
+                                            <tr key={index} style={styles.tr}>
+                                                <td style={styles.td}>{atraso.RUT_ALUMNO}</td>
+                                                <td style={styles.td}>{atraso.NOMBRE_COMPLETO}</td>
+                                                <td style={styles.td}>{atraso.NOMBRE_CURSO}</td>
+                                                <td style={styles.td}>{new Date(atraso.FECHA_ATRASOS).toLocaleString()}</td>
+                                                <td style={styles.td}>{atraso.JUSTIFICATIVO ? 'Sí' : 'No'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <button
+                                onClick={toggleChart}
+                                style={styles.chartButton}
+                                disabled={reportData.atrasos.length === 0}
+                            >
+                                {showChart ? 'Ocultar Gráfica de Atrasos' : 'Mostrar Gráfica de Atrasos'}
+                            </button>
+
+                            {showChart && chartData.length > 0 && (
+                                <div style={styles.chartContainer}>
+                                    <h3>Cantidad de Atrasos por Fecha</h3>
+                                    <ResponsiveContainer width="50%" height={300}>
+                                        <BarChart
+                                            data={chartData}
+                                            margin={{
+                                                top: 20,
+                                                right: 30,
+                                                left: 20,
+                                                bottom: 5,
+                                            }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="fecha" />
+                                            <YAxis allowDecimals={false} />
+                                            <Tooltip />
+                                            <Legend />
+                                            <Bar dataKey="cantidad" fill="#8884d8" name="Cantidad de Atrasos" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <p>No se encontraron atrasos en este rango de fechas.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
