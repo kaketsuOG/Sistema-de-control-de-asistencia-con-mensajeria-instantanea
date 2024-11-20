@@ -1,18 +1,18 @@
 const express = require('express');
 const path = require('path');
 const router = express.Router();
-const atrasosController = require('../controllers/atrasosController');
+const atrasosController = require('../controllers/atrasosController'); // Importar controlador
 
 // Obtener todos los atrasos
 router.get('/atrasos', atrasosController.getAllAtrasos);
 
-// Ruta para obtener atrasos en un rango específico
+// Obtener atrasos en un rango específico
 router.get('/atrasos/rango', atrasosController.getAtrasosRango);
 
-// Ruta para verificar si existe el RUT
-router.get('/alumnos/verificar/:rut', atrasosController.verificarRut);
+// Verificar si existe un alumno con el RUT proporcionado
+router.get('/alumnos/verificar/:rut', atrasosController.verificarRut); // Asegúrate de que esta función exista
 
-// Ruta para obtener los atrasos del día (debe ir antes de la ruta con :id)
+// Obtener los atrasos del día (debe ir antes de la ruta dinámica con :id)
 router.get('/atrasos/dia', atrasosController.getAtrasosDelDia);
 
 // Registrar un nuevo atraso
@@ -24,10 +24,10 @@ router.put('/atrasos/:id', atrasosController.updateAtraso);
 // Eliminar un atraso
 router.delete('/atrasos/:id', atrasosController.deleteAtraso);
 
-// Nueva ruta para descargar el PDF de los atrasos
+// Descargar el PDF de los atrasos
 router.get('/SalidaPDF/:filename', (req, res) => {
     const filePath = path.join(__dirname, '../SalidaPDF', req.params.filename);
-    res.download(filePath); // Esto inicia la descarga del archivo
+    res.download(filePath); // Inicia la descarga del archivo
 });
 
 module.exports = router;

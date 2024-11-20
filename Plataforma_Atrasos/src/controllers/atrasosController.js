@@ -1,3 +1,4 @@
+const printer = require("printer");
 const db = require('../config/db');
 const pdfController = require('./PDFController');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
@@ -13,8 +14,53 @@ whatsappController.handleAuthentication();
 whatsappController.handleDisconnection();
 
 
+exports.verificarRut = (req, res) => {
+    const { rut } = req.params;
+    const query = 'SELECT * FROM ALUMNOS WHERE RUT_ALUMNO = ?';
+
+    db.query(query, [rut], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error al verificar el RUT' });
+        }
+        if (results.length > 0) {
+            res.status(200).json({ exists: true, alumno: results[0] });
+        } else {
+            res.status(404).json({ exists: false });
+        }
+    });
+};
+
 // Función para enviar un PDF
 const sendPDF = whatsappController.sendPDF;
+
+// Función para imprimir el boucher
+function imprimirBoucher(nombreCompleto = "Desconocido", rutAlumno = "Sin RUT", nombreCurso = "Sin Curso", fechaAtraso = "Sin Fecha", codAtraso = "Sin Código") {
+    // Generar el contenido en formato RAW, incluyendo el código del atraso
+    const rawData = '\x1B\x40' + // Resetear impresora
+        `Curso: ${nombreCurso}\n` +
+        `Nombre: ${nombreCompleto}\n` +
+        `RUT: ${rutAlumno}\n` +
+        `Fecha: ${fechaAtraso}\n` +
+        `Código de Atraso: ${codAtraso}\n\n` +
+        '\x1D\x56\x42\x00'; // Cortar papel
+
+    // Depuración: mostrar el contenido generado
+    console.log("Datos enviados a la impresora:");
+    console.log(rawData);
+
+    // Enviar a la impresora
+    printer.printDirect({
+        data: rawData,
+        type: "RAW",
+        printer: "EPSON TM-T20II Receipt", // Nombre exacto de tu impresora
+        success: (jobID) => {
+            console.log(`Trabajo de impresión enviado con ID: ${jobID}`);
+        },
+        error: (err) => {
+            console.error("Error al imprimir:", err);
+        },
+    });
+}
 
 // Obtener todos los atrasos
 exports.getAllAtrasos = (req, res) => {
@@ -43,121 +89,74 @@ exports.getAllAtrasos = (req, res) => {
 };
 
 // Registrar un nuevo atraso
-// Registrar un nuevo atraso
 exports.createAtraso = async (req, res) => {
-    const { rutAlumno } = req.body;
+    const { rutAlumno } = req.body; // Eliminamos CODATRASO del body
     const fechaAtrasos = new Date();
 
     if (!rutAlumno) {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    // Primero verificamos si el RUT existe en la base de datos
-    const checkRutQuery = 'SELECT COUNT(*) as count FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-    
-    db.query(checkRutQuery, [rutAlumno], (checkError, checkResults) => {
-        if (checkError) {
-            return res.status(500).json({ error: 'Error al verificar el RUT del alumno' });
+    // Consulta para obtener datos del alumno
+    const alumnoQuery = `
+        SELECT 
+            A.RUT_ALUMNO,
+            CONCAT(A.NOMBRE_ALUMNO, ' ', A.SEGUNDO_NOMBRE_ALUMNO, ' ', A.APELLIDO_PATERNO_ALUMNO, ' ', A.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO,
+            C.NOMBRE_CURSO
+        FROM ALUMNOS A
+        JOIN CURSOS C ON A.COD_CURSO = C.COD_CURSO
+        WHERE A.RUT_ALUMNO = ?;
+    `;
+
+    db.query(alumnoQuery, [rutAlumno], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error al obtener datos del alumno' });
         }
 
-        if (checkResults[0].count === 0) {
-            return res.status(404).json({ error: 'El RUT del alumno no existe en la base de datos' });
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Alumno no encontrado' });
         }
 
-        // Si el RUT existe, continuamos con la lógica original
-        const tipoJustificativoQuery = `
-            SELECT JUSTIFICATIVO_RESIDENCIA, JUSTIFICATIVO_MEDICO, JUSTIFICATIVO_DEPORTIVO 
-            FROM ALUMNOS 
-            WHERE RUT_ALUMNO = ?;
+        const alumno = results[0];
+        const { NOMBRE_COMPLETO: nombreCompleto, NOMBRE_CURSO: nombreCurso } = alumno;
+
+        // Insertar el atraso
+        const insertQuery = `
+            INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO, TIPO_JUSTIFICATIVO) 
+            VALUES (?, ?, ?, ?)
         `;
 
-        db.query(tipoJustificativoQuery, [rutAlumno], (error, results) => {
-            if (error) {
-                return res.status(500).json({ error: 'Error al obtener datos del alumno' });
+        db.query(insertQuery, [rutAlumno, fechaAtrasos, 0, 'Sin justificativo'], async (insertError, insertResults) => {
+            if (insertError) {
+                return res.status(500).json({ error: 'Error al registrar el atraso' });
             }
 
-            const justificativos = results[0];
-            let tipoJustificativo = 'Sin justificativo';
-            let justificativoValue = 0;
+            const codAtraso = insertResults.insertId;
 
-            if (justificativos.JUSTIFICATIVO_RESIDENCIA) {
-                tipoJustificativo = 'Residencia';
-                justificativoValue = 1;
-            } else if (justificativos.JUSTIFICATIVO_MEDICO) {
-                tipoJustificativo = 'Médico';
-                justificativoValue = 1;
-            } else if (justificativos.JUSTIFICATIVO_DEPORTIVO) {
-                tipoJustificativo = 'Deportivo';
-                justificativoValue = 1;
+            // Imprimir el boucher
+            const fechaFormateada = fechaAtrasos.toLocaleString();
+            imprimirBoucher(nombreCompleto, rutAlumno, nombreCurso, fechaFormateada, codAtraso);
+
+            try {
+                // Generar PDF
+                const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
+                const updatePdfQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
+                db.query(updatePdfQuery, [pdfPath, codAtraso]);
+
+                res.status(201).json({ message: 'Atraso registrado, boucher impreso y PDF generado correctamente' });
+            } catch (err) {
+                console.error('Error generando el PDF:', err);
+                res.status(500).json({ error: 'Se registró el atraso, pero ocurrió un error generando el PDF' });
             }
-
-            const insertQuery = `
-                INSERT INTO ATRASOS (RUT_ALUMNO, FECHA_ATRASOS, JUSTIFICATIVO, TIPO_JUSTIFICATIVO) 
-                VALUES (?, ?, ?, ?)
-            `;
-
-            db.query(insertQuery, [rutAlumno, fechaAtrasos, justificativoValue, tipoJustificativo], async (insertError, results) => {
-                if (insertError) {
-                    return res.status(500).json({ error: 'Error al insertar el atraso' });
-                }
-
-                const codAtraso = results.insertId;
-
-                try {
-                    const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
-                    const pdfFileName = pdfPath.split('/').pop();
-                    console.log('Nombre del PDF generado:', pdfFileName);
-
-                    const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
-                    db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (error, result) => {
-                        if (error) {
-                            console.error('Error al actualizar la ruta del PDF en la base de datos:', error);
-                            return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });
-                        }
-                        console.log('Ruta del PDF actualizada correctamente en la base de datos.');
-                    });
-
-                    if (justificativoValue === 0) {
-                        const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-                        db.query(getCelularQuery, [rutAlumno], async (error, results) => {
-                            if (error) {
-                                console.error('Error al obtener el número de celular del apoderado:', error);
-                                return res.status(500).json({ error: 'Error al obtener el número de celular del apoderado' });
-                            }
-
-                            const celularApoderado = results[0]?.N_CELULAR_APODERADO;
-                            if (celularApoderado) {
-                                await sendPDF(celularApoderado, pdfPath);
-                            } else {
-                                console.error('Error: No se encontró el número de celular del apoderado.');
-                                return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
-                            }
-
-                            res.status(201).json({ message: 'Atraso creado con éxito', id: codAtraso });
-                        });
-                    } else {
-                        console.log('El alumno tiene un justificativo, no se enviará el mensaje.');
-                        res.status(201).json({ message: 'Atraso creado con éxito, pero no se envió mensaje por justificativo', id: codAtraso });
-                    }
-
-                } catch (pdfError) {
-                    console.error('Error al generar PDF:', pdfError);
-                    res.status(500).json({ error: 'Se creó el atraso, pero no se pudo generar el PDF' });
-                }
-            });
         });
     });
 };
-
-
-
 
 // Actualizar un atraso existente
 exports.updateAtraso = (req, res) => {
     const { id } = req.params;
     const { rutAlumno, fechaAtrasos, justificativo } = req.body;
 
-    // Verifica que el justificativo sea un booleano
     if (typeof justificativo !== 'boolean') {
         return res.status(400).json({ error: 'El justificativo debe ser un booleano' });
     }
@@ -188,17 +187,15 @@ exports.deleteAtraso = (req, res) => {
 
 // Obtener atrasos del día
 exports.getAtrasosDelDia = (req, res) => {
-    const { fecha } = req.query; // Recibe la fecha desde el frontend como un parámetro de consulta
+    const { fecha } = req.query;
 
     if (!fecha) {
         return res.status(400).json({ error: 'Se requiere una fecha' });
     }
 
-    // Convertir la fecha proporcionada a formato de JavaScript y establecer el inicio y fin del día
     const inicioDelDia = new Date(`${fecha}T00:00:00`);
     const finDelDia = new Date(`${fecha}T23:59:59`);
 
-    // Incluir TIPO_JUSTIFICATIVO en la consulta
     const query = `
         SELECT A.RUT_ALUMNO, A.FECHA_ATRASOS, A.JUSTIFICATIVO, A.TIPO_JUSTIFICATIVO, 
                CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO, 
@@ -211,15 +208,14 @@ exports.getAtrasosDelDia = (req, res) => {
 
     db.query(query, [inicioDelDia, finDelDia], (error, results) => {
         if (error) {
-            console.error('Error en la consulta SQL:', error); // Agrega esta línea para ver el error
+            console.error('Error al obtener atrasos:', error);
             return res.status(500).json({ error: 'Error al obtener los atrasos' });
         }
         res.json(results);
     });
 };
 
-
-// Obtener atrasos en un rango de fechas con el tipo de justificativo
+// Obtener atrasos en un rango de fechas
 exports.getAtrasosRango = (req, res) => {
     const { startDate, endDate } = req.query;
 
@@ -230,17 +226,9 @@ exports.getAtrasosRango = (req, res) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    if (isNaN(start) || isNaN(end)) {
-        return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD' });
-    }
-
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-
     const query = `
         SELECT 
-            A.RUT_ALUMNO,
-            A.FECHA_ATRASOS,
+            A.RUT_ALUMNO, A.FECHA_ATRASOS,
             CASE
                 WHEN B.JUSTIFICATIVO_RESIDENCIA = 1 THEN 'Residencia'
                 WHEN B.JUSTIFICATIVO_MEDICO = 1 THEN 'Médico'
@@ -249,48 +237,19 @@ exports.getAtrasosRango = (req, res) => {
             END AS TIPO_JUSTIFICATIVO,
             CONCAT(B.NOMBRE_ALUMNO, ' ', B.SEGUNDO_NOMBRE_ALUMNO, ' ', B.APELLIDO_PATERNO_ALUMNO, ' ', B.APELLIDO_MATERNO_ALUMNO) AS NOMBRE_COMPLETO,
             C.NOMBRE_CURSO
-        FROM 
-            ATRASOS A
-        JOIN 
-            ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
-        JOIN 
-            CURSOS C ON B.COD_CURSO = C.COD_CURSO
-        WHERE 
-            A.FECHA_ATRASOS BETWEEN ? AND ?
-        ORDER BY 
-            A.FECHA_ATRASOS ASC
+        FROM ATRASOS A
+        JOIN ALUMNOS B ON A.RUT_ALUMNO = B.RUT_ALUMNO
+        JOIN CURSOS C ON B.COD_CURSO = C.COD_CURSO
+        WHERE A.FECHA_ATRASOS BETWEEN ? AND ?
+        ORDER BY A.FECHA_ATRASOS ASC
     `;
 
     db.query(query, [start, end], (error, results) => {
         if (error) {
-            console.error('Error en la consulta de atrasos por rango:', error);
+            console.error('Error al obtener atrasos por rango:', error);
             return res.status(500).json({ error: 'Error al obtener los atrasos por rango' });
         }
 
-        res.status(200).json({
-            startDate: start.toISOString().split('T')[0],
-            endDate: end.toISOString().split('T')[0],
-            atrasos: results
-        });
-    });
-};
-// Verificar si existe un RUT
-exports.verificarRut = (req, res) => {
-    const { rut } = req.params;
-    
-    if (!rut) {
-        return res.status(400).json({ error: 'RUT no proporcionado' });
-    }
-
-    const query = 'SELECT COUNT(*) as count FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-    
-    db.query(query, [rut], (error, results) => {
-        if (error) {
-            console.error('Error al verificar RUT:', error);
-            return res.status(500).json({ error: 'Error al verificar el RUT' });
-        }
-
-        const exists = results[0].count > 0;
-        res.json({ exists });
+        res.status(200).json({ atrasos: results });
     });
 };
