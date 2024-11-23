@@ -3,16 +3,13 @@ import axios from 'axios';
 
 const AttendanceForm = ({ onSuccess, currentData }) => {
     const [rutAlumno, setRutAlumno] = useState(currentData?.rutAlumno || '');
-    const [nombreAlumno, setNombreAlumno] = useState('');
+    const [nombreAlumno, setNombreAlumno] = useState(''); // Estado para almacenar el nombre del alumno
+    const [mostrarJustificativo, setMostrarJustificativo] = useState(false); // Control para mostrar justificativos
     const [fechaAtrasos, setFechaAtraso] = useState(new Date());
-    const [residenciaJustificativo, setResidenciaJustificativo] = useState(false);
-    const [medicoJustificativo, setMedicoJustificativo] = useState(false);
-    const [deportivoJustificativo, setDeportivoJustificativo] = useState(false);
-    const [mostrarJustificativo, setMostrarJustificativo] = useState(false);
     const [error, setError] = useState('');
     const [notificationVisible, setNotificationVisible] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-    const [isValidatingRut, setIsValidatingRut] = useState(false);
+    const [baucherPath, setBaucherPath] = useState(null); // Ruta del baucher generado
     const rutInputRef = useRef(null);
 
     useEffect(() => {
@@ -21,10 +18,6 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         } else {
             setRutAlumno(currentData.rutAlumno);
             setFechaAtraso(new Date());
-            setResidenciaJustificativo(false);
-            setMedicoJustificativo(false);
-            setDeportivoJustificativo(false);
-            setMostrarJustificativo(false);
             setError('');
         }
         rutInputRef.current?.focus();
@@ -35,27 +28,13 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         return () => clearInterval(timer);
     }, []);
 
-    useEffect(() => {
-        let timer;
-        if (error && error.includes('no existe')) {
-            timer = setTimeout(() => {
-                resetForm();
-            }, 2000);
-        }
-        return () => {
-            if (timer) clearTimeout(timer);
-        };
-    }, [error]);
-
     const resetForm = () => {
         setRutAlumno('');
-        setFechaAtraso(new Date());
-        setResidenciaJustificativo(false);
-        setMedicoJustificativo(false);
-        setDeportivoJustificativo(false);
-        setMostrarJustificativo(false);
-        setError('');
         setNombreAlumno('');
+        setMostrarJustificativo(false);
+        setFechaAtraso(new Date());
+        setError('');
+        setBaucherPath(null); // Limpiar la ruta del baucher
         rutInputRef.current?.focus();
     };
 
@@ -69,90 +48,68 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
         }
     };
 
-    const checkJustificativos = async () => {
-        setIsValidatingRut(true);
-        setError('');
+    const obtenerDatosAlumno = async (rut) => {
         try {
-            // Primero validamos si el RUT existe
-            const rutExiste = await validarRutExistente(rutAlumno);
-            if (!rutExiste) {
-                setError('El RUT ingresado no existe en la base de datos');
-                setMostrarJustificativo(false);
-                setNombreAlumno('');
-                return false;
+            const response = await axios.get(`http://localhost:3000/api/alumnos/${rut}`);
+            if (response.status === 200) {
+                const { nombre, justificativo } = response.data;
+                setNombreAlumno(nombre);
+                setMostrarJustificativo(justificativo); // Determinar si hay justificativos
             }
-
-            const response = await axios.get(`http://localhost:3000/api/alumnos/${rutAlumno}/residencia`);
-            
-            const tieneResidencia = response.data.justificativo_residencia === 1;
-            const tieneMedico = response.data.justificativo_medico === 1;
-            const tieneDeportivo = response.data.justificativo_deportivo === 1;
-
-            setResidenciaJustificativo(tieneResidencia);
-            setMedicoJustificativo(tieneMedico);
-            setDeportivoJustificativo(tieneDeportivo);
-            setNombreAlumno(response.data.NOMBRE_ALUMNO || '');
-            setMostrarJustificativo(true);
-            setError('');
-            return true;
-        } catch (err) {
-            setResidenciaJustificativo(false);
-            setMedicoJustificativo(false);
-            setDeportivoJustificativo(false);
+        } catch (error) {
+            console.error('Error al obtener los datos del alumno:', error);
+            setNombreAlumno('');
             setMostrarJustificativo(false);
-            setError(err.response?.status === 404 
-                ? 'El RUT ingresado no existe en la base de datos' 
-                : 'Error al verificar justificativos');
-            return false;
-        } finally {
-            setIsValidatingRut(false);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-    
+        setBaucherPath(null); // Limpiar cualquier baucher anterior
+
         try {
-            const isValid = await checkJustificativos();
-            if (!isValid) {
-                return; // Si el RUT no es válido, detenemos el proceso
+            // Validar que el RUT existe antes de enviar el formulario
+            const rutExiste = await validarRutExistente(rutAlumno);
+            if (!rutExiste) {
+                setError('El RUT ingresado no existe en la base de datos');
+                return;
             }
-            
-            setMostrarJustificativo(true);
-    
-            setTimeout(async () => {
-                const url = currentData 
-                    ? `http://localhost:3000/api/atrasos/${currentData.id}`
-                    : 'http://localhost:3000/api/atrasos';
-                const method = currentData ? axios.put : axios.post;
-                const response = await method(url, { rutAlumno, fechaAtrasos });
-    
-                if (response.status >= 200 && response.status < 300) {
-                    setSuccessMessage('Atraso registrado y PDF generado con éxito.');
-                    setNotificationVisible(true);
-    
-                    if (onSuccess) onSuccess();
-                    resetForm();
-                } else {
-                    setError('Error en la solicitud. Código de estado: ' + response.status);
-                }
-                
-                setMostrarJustificativo(false);
-            }, 2000);
-    
+
+            // Obtener datos adicionales del alumno antes de enviar
+            await obtenerDatosAlumno(rutAlumno);
+
+            // Enviar datos al backend para registrar el atraso
+            const url = currentData
+                ? `http://localhost:3000/api/atrasos/${currentData.id}`
+                : 'http://localhost:3000/api/atrasos';
+            const method = currentData ? axios.put : axios.post;
+            const response = await method(url, { rutAlumno, fechaAtrasos });
+
+            if (response.status === 201) {
+                const { baucherPath } = response.data; // Ruta del PDF generada en el backend
+                setSuccessMessage('Atraso registrado con éxito.');
+                setBaucherPath(baucherPath);
+                setNotificationVisible(true);
+                if (onSuccess) onSuccess();
+                resetForm();
+
+                // Abre el PDF en una nueva ventana para ver/descargar/print
+                window.open(`http://localhost:3000${baucherPath}`, '_blank');
+            } else {
+                setError('Error al registrar el atraso.');
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.error || 'Error al guardar el atraso: ' + err.message;
             setError(errorMessage);
-            
-            // Si el error es de RUT no existente, se limpiará automáticamente por el useEffect
-            if (!errorMessage.includes('no existe')) {
-                // Para otros errores, no hacemos reset automático
-                setIsValidatingRut(false);
-            }
         }
     };
 
+    const handleDownloadBaucher = () => {
+        if (baucherPath) {
+            window.open(`http://localhost:3000/${baucherPath}`, '_blank'); // Abrir el PDF en una nueva ventana
+        }
+    };
 
     useEffect(() => {
         if (notificationVisible) {
@@ -212,8 +169,6 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             borderRadius: '4px',
             cursor: 'pointer',
             fontWeight: 'bold',
-            opacity: isValidatingRut ? 0.7 : 1,
-            pointerEvents: isValidatingRut ? 'none' : 'auto',
         },
         dateDisplay: {
             width: '100%',
@@ -232,19 +187,6 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             backgroundColor: '#ffe6e6',
             borderRadius: '4px',
             width: '100%',
-            transition: 'opacity 0.5s ease-in-out',
-            opacity: error ? 1 : 0
-        },
-        success: {
-            color: '#28a745',
-            textAlign: 'center',
-            marginBottom: '15px',
-        },
-        justificativoText: {
-            textAlign: 'center',
-            fontWeight: 'bold',
-            color: '#007bff',
-            marginBottom: '15px',
         },
         notification: {
             position: 'fixed',
@@ -255,13 +197,15 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
             padding: '10px 20px',
             borderRadius: '5px',
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-            transition: 'opacity 0.3s',
-            opacity: notificationVisible ? 1 : 0,
-            pointerEvents: notificationVisible ? 'auto' : 'none',
+        },
+        link: {
+            color: '#007bff',
+            textDecoration: 'underline',
+            cursor: 'pointer',
         },
     };
 
-  return (
+    return (
         <div style={styles.container}>
             <h2 style={styles.title}>{currentData ? 'Editar Atraso' : 'Registrar Atraso'}</h2>
             {error && <p style={styles.error}>{error}</p>}
@@ -269,43 +213,33 @@ const AttendanceForm = ({ onSuccess, currentData }) => {
                 <label style={styles.label}>RUT Alumno</label>
                 <div style={styles.inputContainer}>
                     <input
-                        ref={rutInputRef} // Agrega la referencia al input
+                        ref={rutInputRef}
                         type="text"
                         value={rutAlumno}
                         onChange={(e) => setRutAlumno(e.target.value)}
                         placeholder="Ingrese RUT"
                         required
-                        style={{
-                            ...styles.input,
-                            borderColor: error ? '#dc3545' : '#ddd'
-                        }}
-                        disabled={isValidatingRut}
+                        style={styles.input}
                     />
                 </div>
-                {mostrarJustificativo && nombreAlumno && (
-                    <p style={styles.justificativoText}>
-                        {nombreAlumno} {' '}
-                        {[
-                            residenciaJustificativo && 'residencia',
-                            medicoJustificativo && 'médico',
-                            deportivoJustificativo && 'deportivo'
-                        ]
-                            .filter(Boolean)
-                            .join(' y ') || 'no presenta justificativos.'}
+                {nombreAlumno && (
+                    <p style={{ color: '#333', fontWeight: 'bold' }}>
+                        Alumno: {nombreAlumno} {mostrarJustificativo ? '(Con justificativo)' : '(Sin justificativo)'}
                     </p>
                 )}
                 <label style={styles.label}>Fecha y Hora Actual</label>
                 <div style={styles.dateDisplay}>
                     {fechaAtrasos.toLocaleString()}
                 </div>
-                <button 
-                    type="submit" 
-                    style={{ ...styles.button, width: '100%' }}
-                    disabled={isValidatingRut}
-                >
-                    {isValidatingRut ? 'Validando...' : (currentData ? 'Actualizar' : 'Guardar')}
+                <button type="submit" style={{ ...styles.button, width: '100%' }}>
+                    {currentData ? 'Actualizar' : 'Guardar'}
                 </button>
             </form>
+            {baucherPath && (
+                <p style={styles.link} onClick={handleDownloadBaucher}>
+                    Descargar baucher
+                </p>
+            )}
             {notificationVisible && <div style={styles.notification}>{successMessage}</div>}
         </div>
     );
