@@ -135,7 +135,6 @@ exports.createAtraso = async (req, res) => {
         return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    // Verificar si el RUT existe en la base de datos
     const checkRutQuery = 'SELECT * FROM ALUMNOS WHERE RUT_ALUMNO = ?';
 
     db.query(checkRutQuery, [rutAlumno], async (checkError, checkResults) => {
@@ -170,37 +169,35 @@ exports.createAtraso = async (req, res) => {
                 const codAtraso = results.insertId;
 
                 try {
-                    // **Generar PDF institucional**
                     const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
                     const pdfFileName = pdfPath.split('/').pop();
+                    console.log('Nombre del PDF generado:', pdfFileName);
 
-                    // Actualizar la base de datos con la ruta del PDF institucional
                     const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
-                    db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (updateError) => {
-                        if (updateError) {
-                            console.error('Error al actualizar la ruta del PDF institucional:', updateError);
+                    db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (error, result) => {
+                        if (error) {
+                            console.error('Error al actualizar la ruta del PDF institucional:', error);
                             return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });
                         }
-                        console.log('PDF institucional generado y guardado correctamente.');
+                        console.log('Ruta del PDF actualizada correctamente en la base de datos.');
                     });
 
-                    // **Enviar PDF por WhatsApp**
                     const getCelularQuery = 'SELECT N_CELULAR_APODERADO FROM ALUMNOS WHERE RUT_ALUMNO = ?';
-                    db.query(getCelularQuery, [rutAlumno], async (celularError, celularResults) => {
-                        if (celularError) {
-                            console.error('Error al obtener el celular del apoderado:', celularError);
+                    db.query(getCelularQuery, [rutAlumno], async (error, results) => {
+                        if (error) {
+                            console.error('Error al obtener el celular del apoderado:', error);
                             return res.status(500).json({ error: 'Error al obtener el celular del apoderado' });
                         }
 
-                        const celularApoderado = celularResults[0]?.N_CELULAR_APODERADO;
+                        const celularApoderado = results[0]?.N_CELULAR_APODERADO;
                         if (celularApoderado) {
                             await sendPDF(celularApoderado, pdfPath);
-                        } else {
-                            console.warn('No se encontró el número de celular del apoderado.');
+                        }  else {
+                            console.error('Error: No se encontró el número de celular del apoderado.');
+                            return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
                         }
                     });
 
-                    // **Generar PDF baucher**
                     const baucherPath = generateBaucher({
                         curso,
                         nombre: `${alumno.NOMBRE_ALUMNO} ${alumno.APELLIDO_PATERNO_ALUMNO} ${alumno.APELLIDO_MATERNO_ALUMNO}`,
@@ -211,13 +208,13 @@ exports.createAtraso = async (req, res) => {
 
                     console.log('Baucher generado correctamente.');
 
-                    res.status(201).json({
+                    return res.status(201).json({
                         message: 'Atraso creado con éxito',
                         pdfInstitutionalPath: pdfPath,
                         baucherPath,
                     });
-                } catch (error) {
-                    console.error('Error al procesar el atraso:', error);
+                } catch (pdfError) {
+                    console.error('Error al procesar el atraso:', pdfError);
                     res.status(500).json({ error: 'Error al procesar el atraso y generar PDFs' });
                 }
             });
