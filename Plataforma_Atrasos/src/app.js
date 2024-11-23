@@ -20,7 +20,7 @@ app.use(bodyParser());
 app.use(express.json());
 
 // Archivos estáticos
-app.use('/SalidaPDF', express.static(path.join(__dirname, 'Plataforma_Atrasos/src/SalidaPDF')));
+app.use('/SalidaPDF', express.static(path.join(__dirname, 'SalidaPDF')));
 
 // Rutas
 app.use('/auth', authRoutes);

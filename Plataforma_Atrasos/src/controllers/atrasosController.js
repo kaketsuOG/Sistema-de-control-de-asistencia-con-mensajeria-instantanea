@@ -172,10 +172,11 @@ exports.createAtraso = async (req, res) => {
                 try {
                     // **Generar PDF institucional**
                     const pdfPath = await pdfController.fillForm(rutAlumno, fechaAtrasos);
+                    const pdfFileName = pdfPath.split('/').pop();
 
                     // Actualizar la base de datos con la ruta del PDF institucional
                     const updatePdfPathQuery = 'UPDATE ATRASOS SET pdf_path = ? WHERE COD_ATRASOS = ?';
-                    db.query(updatePdfPathQuery, [pdfPath, codAtraso], (updateError) => {
+                    db.query(updatePdfPathQuery, [pdfFileName, codAtraso], (updateError) => {
                         if (updateError) {
                             console.error('Error al actualizar la ruta del PDF institucional:', updateError);
                             return res.status(500).json({ error: 'Error al actualizar la ruta del PDF en la base de datos' });
