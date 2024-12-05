@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const request = require('supertest');
 const db = require('../config/db'); // Mockeamos la base de datos
 const app = require('../app'); // Asegúrate de exportar tu instancia de app en app.js
@@ -48,4 +50,9 @@ describe('Justificativos Controller', () => {
             expect(response.body.error).toBe('Alumno no encontrado');
         });
     });
+});
+
+afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
 });

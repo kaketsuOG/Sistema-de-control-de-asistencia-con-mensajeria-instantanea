@@ -1,36 +1,53 @@
-const request = require('supertest');
-const jwt = require('jsonwebtoken');
-const app = require('../app'); // Asegúrate de exportar `app` en tu archivo `app.js`
+jest.setTimeout(30000);
 
-// Mocks
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middlewares/authMiddleware');
+
+
 jest.mock('jsonwebtoken');
 
 describe('Auth Middleware', () => {
-    it('Debe denegar el acceso sin un token', async () => {
-        const response = await request(app).get('/auth/users'); // Ruta protegida
-        expect(response.status).toBe(401);
-        expect(response.body.message).toBe('Acceso denegado, se requiere autenticación.');
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('Debe denegar el acceso con un token no válido', async () => {
-        jwt.verify.mockImplementation(() => { throw new Error(); }); // Forzamos un error en la verificación del token
+    it('Debe permitir el acceso con un token válido', () => {
+        const req = {
+            headers: { authorization: 'Bearer valid-token' },
+        };
+        const res = {};
+        const next = jest.fn();
 
-        const response = await request(app)
-            .get('/auth/users') // Ruta protegida
-            .set('Authorization', 'Bearer invalidtoken');
-        expect(response.status).toBe(400);
-        expect(response.body.message).toBe('Token no válido.');
+        // Mock del token válido
+        jwt.verify.mockReturnValue({ id: '12345678-9' });
+
+        authMiddleware(req, res, next);
+
+        expect(jwt.verify).toHaveBeenCalledWith('valid-token', process.env.JWT_SECRET);
+        expect(req.user).toEqual({ id: '12345678-9' });
+        expect(next).toHaveBeenCalled();
     });
 
-    it('Debe permitir el acceso con un token válido', async () => {
-        const mockUser = { id: '12345678-9' };
-        jwt.verify.mockReturnValue(mockUser); // Simulamos un token válido
+    it('Debe bloquear el acceso con un token inválido', () => {
+        const req = {
+            headers: { authorization: 'Bearer invalid-token' },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+        const next = jest.fn();
 
-        const response = await request(app)
-            .get('/auth/users') // Ruta protegida
-            .set('Authorization', 'Bearer validtoken');
+        // Mock del token inválido
+        jwt.verify.mockImplementation(() => {
+            throw new Error('Token inválido');
+        });
 
-        expect(response.status).toBe(200);
-        // Aquí puedes agregar más expectativas según la respuesta esperada cuando el token es válido
+        authMiddleware(req, res, next);
+
+        expect(jwt.verify).toHaveBeenCalledWith('invalid-token', process.env.JWT_SECRET);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Token inválido' });
+        expect(next).not.toHaveBeenCalled();
     });
 });

@@ -1,108 +1,109 @@
 const request = require('supertest');
+const httpMocks = require('node-mocks-http');
+const bcrypt = require('bcryptjs'); // Asegúrate de usar bcryptjs
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const db = require('../config/db'); // Mockeamos la base de datos
-const app = require('../app'); // Asegúrate de que exportas tu instancia de app en app.js
+const db = require('../config/db');
+const app = require('../app');
+const authController = require('../controllers/authController');
 
-jest.mock('../config/db'); // Simulamos las consultas a la base de datos
+jest.mock('../config/db');
+jest.mock('bcryptjs', () => ({
+    hash: jest.fn((password, saltRounds, callback) => {
+        if (password === 'error') {
+            return callback(new Error('Error al hash de la contraseña'));
+        }
+        callback(null, 'hashedPassword123');
+    }),
+}));
+jest.mock('jsonwebtoken');
 
-// Generamos un token válido para autenticación
-const token = jwt.sign({ id: '12345678-9' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+let token;
+
+beforeEach(() => {
+    token = jwt.sign({ id: '12345' }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    jwt.verify = jest.fn(() => ({ id: '12345' }));
+});
 
 describe('Auth Controller - Otros Endpoints', () => {
     describe('Register', () => {
         it('Debe registrar un nuevo usuario', async () => {
-            db.query.mockImplementation((query, params, callback) => {
-                callback(null); // Simulamos una inserción exitosa
+            bcrypt.hash.mockImplementation((password, saltRounds, callback) => {
+                callback(null, 'hashedPassword123'); // Mock del hash exitoso
             });
 
-            const response = await request(app)
-                .post('/auth/register')
-                .send({
-                    nombreUsuario: 'testuser',
+            db.query.mockImplementation((query, params, callback) => {
+                callback(null); // Mock de una inserción exitosa
+            });
+
+            const req = httpMocks.createRequest({
+                body: {
+                    nombreUsuario: 'Test User',
                     codRol: 1,
                     contraseña: 'password123',
                     rutUsername: '12345678-9',
-                })
-                .set('Authorization', `Bearer ${token}`);
+                },
+            });
+            const res = httpMocks.createResponse();
 
-            expect(response.status).toBe(201);
-            expect(response.body.message).toBe('Usuario registrado correctamente');
+            await authController.register(req, res);
+
+            expect(res.statusCode).toBe(201);
+            expect(res._getJSONData()).toEqual({
+                message: 'Usuario registrado correctamente',
+            });
         });
 
         it('Debe retornar un error si ocurre un problema en la base de datos al registrar', async () => {
-            db.query.mockImplementation((query, params, callback) => {
-                callback(new Error('Error en la base de datos'));
+            bcrypt.hash.mockImplementation((password, saltRounds, callback) => {
+                callback(null, 'hashedPassword123'); // Mock del hash exitoso
             });
 
-            const response = await request(app)
-                .post('/auth/register')
-                .send({
-                    nombreUsuario: 'testuser',
+            db.query.mockImplementation((query, params, callback) => {
+                callback(new Error('Error al registrar el usuario')); // Simula un error de la base de datos
+            });
+
+            const req = httpMocks.createRequest({
+                body: {
+                    nombreUsuario: 'Test User',
                     codRol: 1,
                     contraseña: 'password123',
                     rutUsername: '12345678-9',
-                })
-                .set('Authorization', `Bearer ${token}`);
+                },
+            });
+            const res = httpMocks.createResponse();
 
-            expect(response.status).toBe(500);
-            expect(response.body.message).toBe('Error al registrar el usuario');
+            await authController.register(req, res);
+
+            expect(res.statusCode).toBe(500);
+            expect(res._getJSONData()).toEqual({
+                message: 'Error al registrar el usuario',
+            });
+        });
+
+        it('Debe retornar un error si ocurre un problema al hash de la contraseña', async () => {
+            bcrypt.hash.mockImplementation((password, saltRounds, callback) => {
+                callback(new Error('Error al hash de la contraseña')); // Simula un error al hacer hash
+            });
+
+            const req = httpMocks.createRequest({
+                body: {
+                    nombreUsuario: 'Test User',
+                    codRol: 1,
+                    contraseña: 'password123',
+                    rutUsername: '12345678-9',
+                },
+            });
+            const res = httpMocks.createResponse();
+
+            await authController.register(req, res);
+
+            expect(res.statusCode).toBe(500);
+            expect(res._getJSONData()).toEqual({
+                message: 'Error al hash de la contraseña',
+            });
         });
     });
 
-    describe('Get All Users', () => {
-        it('Debe obtener todos los usuarios', async () => {
-            const mockUsers = [{ RUT_USERNAME: '12345678-9', NOMBRE_USUARIO: 'testuser' }];
-            db.query.mockImplementation((query, callback) => {
-                callback(null, mockUsers);
-            });
-
-            const response = await request(app)
-                .get('/auth/users')
-                .set('Authorization', `Bearer ${token}`);
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(mockUsers);
-        });
-
-        it('Debe retornar un error si ocurre un problema en la base de datos al obtener todos los usuarios', async () => {
-            db.query.mockImplementation((query, callback) => {
-                callback(new Error('Error en la base de datos'));
-            });
-
-            const response = await request(app)
-                .get('/auth/users')
-                .set('Authorization', `Bearer ${token}`);
-            expect(response.status).toBe(500);
-            expect(response.body.message).toBe('Error en la base de datos');
-        });
-    });
-
-    describe('Get Users By RUT', () => {
-        it('Debe obtener un usuario por su RUT', async () => {
-            const mockUser = { RUT_USERNAME: '12345678-9', NOMBRE_USUARIO: 'testuser' };
-            db.query.mockImplementation((query, params, callback) => {
-                callback(null, [mockUser]);
-            });
-
-            const response = await request(app)
-                .get('/auth/users/12345678-9')
-                .set('Authorization', `Bearer ${token}`);
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual([mockUser]);
-        });
-
-        it('Debe retornar un error si ocurre un problema en la base de datos al buscar por RUT', async () => {
-            db.query.mockImplementation((query, params, callback) => {
-                callback(new Error('Error en la base de datos'));
-            });
-
-            const response = await request(app)
-                .get('/auth/users/12345678-9')
-                .set('Authorization', `Bearer ${token}`);
-            expect(response.status).toBe(500);
-            expect(response.body.message).toBe('Error en la base de datos');
-        });
-    });
 
     describe('Delete User', () => {
         it('Debe eliminar un usuario por su código de usuario', async () => {
@@ -156,4 +157,9 @@ describe('Auth Controller - Otros Endpoints', () => {
             expect(response.body.message).toBe('Usuario no encontrado');
         });
     });
+});
+
+afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
 });

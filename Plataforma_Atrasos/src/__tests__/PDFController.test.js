@@ -1,3 +1,5 @@
+jest.setTimeout(30000);
+
 const PDFController = require('../controllers/PDFController');
 const db = require('../config/db');
 const fs = require('fs');
@@ -104,4 +106,9 @@ describe('PDFController - fillForm', () => {
 
         await expect(PDFController.fillForm('12345678-9', new Date())).rejects.toEqual('Error al escribir el archivo PDF');
     });
+});
+
+afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
 });

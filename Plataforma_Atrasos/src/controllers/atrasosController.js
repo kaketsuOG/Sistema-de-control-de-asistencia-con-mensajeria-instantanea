@@ -132,7 +132,7 @@ exports.createAtraso = async (req, res) => {
     const fechaAtrasos = new Date();
 
     if (!rutAlumno) {
-        return res.status(400).json({ error: 'Faltan datos requeridos' });
+        return res.status(400).json({ error: 'Datos faltantes en la solicitud' });
     }
 
     const checkRutQuery = 'SELECT * FROM ALUMNOS WHERE RUT_ALUMNO = ?';
@@ -192,7 +192,7 @@ exports.createAtraso = async (req, res) => {
                         const celularApoderado = results[0]?.N_CELULAR_APODERADO;
                         if (celularApoderado) {
                             await sendPDF(celularApoderado, pdfPath);
-                        }  else {
+                        } else {
                             console.error('Error: No se encontró el número de celular del apoderado.');
                             return res.status(404).json({ error: 'No se encontró el número de celular del apoderado' });
                         }
