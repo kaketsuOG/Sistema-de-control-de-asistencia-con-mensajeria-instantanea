@@ -31,9 +31,9 @@
     "path": "^0.12.7",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.15.1",
-    "printer": "^0.4.0",
+    
     "qrcode-terminal": "^0.12.0",
-    "usb": "^2.14.0",
+    
     "whatsapp-web.js": "^1.26.0"
   },
   "devDependencies": {
